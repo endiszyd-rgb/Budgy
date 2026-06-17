@@ -6,8 +6,9 @@ plugins {
 
 android {
     namespace = "com.warsztat.budzet_warsztatu"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "28.2.13676358"
+    buildToolsVersion = "36.1.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
