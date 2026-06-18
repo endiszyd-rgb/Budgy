@@ -46,6 +46,17 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteTransaction(int id) =>
       (delete(transactions)..where((t) => t.id.equals(id))).go();
 
+  Stream<List<Transaction>> watchUnpaidByType(TransactionType type) =>
+      (select(transactions)
+            ..where((t) =>
+                t.isPaid.equals(false) & t.type.equalsValue(type))
+            ..orderBy([(t) => OrderingTerm.asc(t.date)]))
+          .watch();
+
+  Future<void> setPaidStatus(int id, bool isPaid) =>
+      (update(transactions)..where((t) => t.id.equals(id)))
+          .write(TransactionsCompanion(isPaid: Value(isPaid)));
+
   Stream<List<Category>> watchAllCategories() => select(categories).watch();
 
   Future<List<Category>> getCategoriesByType(TransactionType type) =>

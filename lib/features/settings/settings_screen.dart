@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import '../../core/backup/drive_backup_service.dart';
 import '../../core/database/database.dart';
+import '../../core/theme_controller.dart';
 import '../categories/categories_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -150,6 +151,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.dark_mode_outlined, size: 28),
+                      const SizedBox(width: 12),
+                      Text('Wygląd', style: Theme.of(context).textTheme.titleLarge),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: ThemeController.themeMode,
+                    builder: (context, mode, _) => SegmentedButton<ThemeMode>(
+                      segments: const [
+                        ButtonSegment(
+                            value: ThemeMode.system,
+                            label: Text('Systemowy'),
+                            icon: Icon(Icons.brightness_auto, size: 18)),
+                        ButtonSegment(
+                            value: ThemeMode.light,
+                            label: Text('Jasny'),
+                            icon: Icon(Icons.light_mode, size: 18)),
+                        ButtonSegment(
+                            value: ThemeMode.dark,
+                            label: Text('Ciemny'),
+                            icon: Icon(Icons.dark_mode, size: 18)),
+                      ],
+                      selected: {mode},
+                      onSelectionChanged: (s) =>
+                          ThemeController.setThemeMode(s.first),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

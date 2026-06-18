@@ -15,6 +15,7 @@ class Transactions extends Table {
   TextColumn get category => text()();
   TextColumn get notes => text().nullable()();
   TextColumn get wzNumber => text().nullable()();
+  BoolColumn get isPaid => boolean().withDefault(const Constant(true))();
   DateTimeColumn get date => dateTime()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -47,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -58,6 +59,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.createTable(scannedDocuments);
+          }
+          if (from < 3) {
+            await m.addColumn(transactions, transactions.isPaid);
           }
         },
       );

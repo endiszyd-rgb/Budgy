@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/database/database.dart';
 import 'core/theme.dart';
+import 'core/theme_controller.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/transactions/transactions_screen.dart';
 import 'features/transactions/add_transaction_screen.dart';
@@ -13,6 +14,7 @@ import 'features/documents/documents_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pl_PL', null);
+  await ThemeController.load();
   final db = AppDatabase();
   runApp(BudzetWarsztatuApp(db: db));
 }
@@ -23,17 +25,22 @@ class BudzetWarsztatuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Budżet Warsztatu',
-      theme: AppTheme.theme,
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('pl', 'PL'), Locale('en', 'US')],
-      home: MainScaffold(db: db),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.themeMode,
+      builder: (context, mode, _) => MaterialApp(
+        title: 'Budżet Warsztatu',
+        theme: AppTheme.theme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: mode,
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('pl', 'PL'), Locale('en', 'US')],
+        home: MainScaffold(db: db),
+      ),
     );
   }
 }

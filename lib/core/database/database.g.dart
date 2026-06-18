@@ -84,6 +84,19 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isPaidMeta = const VerificationMeta('isPaid');
+  @override
+  late final GeneratedColumn<bool> isPaid = GeneratedColumn<bool>(
+    'is_paid',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_paid" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
@@ -114,6 +127,7 @@ class $TransactionsTable extends Transactions
     category,
     notes,
     wzNumber,
+    isPaid,
     date,
     createdAt,
   ];
@@ -166,6 +180,12 @@ class $TransactionsTable extends Transactions
       context.handle(
         _wzNumberMeta,
         wzNumber.isAcceptableOrUnknown(data['wz_number']!, _wzNumberMeta),
+      );
+    }
+    if (data.containsKey('is_paid')) {
+      context.handle(
+        _isPaidMeta,
+        isPaid.isAcceptableOrUnknown(data['is_paid']!, _isPaidMeta),
       );
     }
     if (data.containsKey('date')) {
@@ -221,6 +241,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}wz_number'],
       ),
+      isPaid: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_paid'],
+      )!,
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
@@ -249,6 +273,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String category;
   final String? notes;
   final String? wzNumber;
+  final bool isPaid;
   final DateTime date;
   final DateTime createdAt;
   const Transaction({
@@ -259,6 +284,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.category,
     this.notes,
     this.wzNumber,
+    required this.isPaid,
     required this.date,
     required this.createdAt,
   });
@@ -280,6 +306,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || wzNumber != null) {
       map['wz_number'] = Variable<String>(wzNumber);
     }
+    map['is_paid'] = Variable<bool>(isPaid);
     map['date'] = Variable<DateTime>(date);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -298,6 +325,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       wzNumber: wzNumber == null && nullToAbsent
           ? const Value.absent()
           : Value(wzNumber),
+      isPaid: Value(isPaid),
       date: Value(date),
       createdAt: Value(createdAt),
     );
@@ -318,6 +346,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       category: serializer.fromJson<String>(json['category']),
       notes: serializer.fromJson<String?>(json['notes']),
       wzNumber: serializer.fromJson<String?>(json['wzNumber']),
+      isPaid: serializer.fromJson<bool>(json['isPaid']),
       date: serializer.fromJson<DateTime>(json['date']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -335,6 +364,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'category': serializer.toJson<String>(category),
       'notes': serializer.toJson<String?>(notes),
       'wzNumber': serializer.toJson<String?>(wzNumber),
+      'isPaid': serializer.toJson<bool>(isPaid),
       'date': serializer.toJson<DateTime>(date),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -348,6 +378,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? category,
     Value<String?> notes = const Value.absent(),
     Value<String?> wzNumber = const Value.absent(),
+    bool? isPaid,
     DateTime? date,
     DateTime? createdAt,
   }) => Transaction(
@@ -358,6 +389,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     category: category ?? this.category,
     notes: notes.present ? notes.value : this.notes,
     wzNumber: wzNumber.present ? wzNumber.value : this.wzNumber,
+    isPaid: isPaid ?? this.isPaid,
     date: date ?? this.date,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -370,6 +402,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       category: data.category.present ? data.category.value : this.category,
       notes: data.notes.present ? data.notes.value : this.notes,
       wzNumber: data.wzNumber.present ? data.wzNumber.value : this.wzNumber,
+      isPaid: data.isPaid.present ? data.isPaid.value : this.isPaid,
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -385,6 +418,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('category: $category, ')
           ..write('notes: $notes, ')
           ..write('wzNumber: $wzNumber, ')
+          ..write('isPaid: $isPaid, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -400,6 +434,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     category,
     notes,
     wzNumber,
+    isPaid,
     date,
     createdAt,
   );
@@ -414,6 +449,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.category == this.category &&
           other.notes == this.notes &&
           other.wzNumber == this.wzNumber &&
+          other.isPaid == this.isPaid &&
           other.date == this.date &&
           other.createdAt == this.createdAt);
 }
@@ -426,6 +462,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> category;
   final Value<String?> notes;
   final Value<String?> wzNumber;
+  final Value<bool> isPaid;
   final Value<DateTime> date;
   final Value<DateTime> createdAt;
   const TransactionsCompanion({
@@ -436,6 +473,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.category = const Value.absent(),
     this.notes = const Value.absent(),
     this.wzNumber = const Value.absent(),
+    this.isPaid = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -447,6 +485,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required String category,
     this.notes = const Value.absent(),
     this.wzNumber = const Value.absent(),
+    this.isPaid = const Value.absent(),
     required DateTime date,
     this.createdAt = const Value.absent(),
   }) : title = Value(title),
@@ -462,6 +501,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? category,
     Expression<String>? notes,
     Expression<String>? wzNumber,
+    Expression<bool>? isPaid,
     Expression<DateTime>? date,
     Expression<DateTime>? createdAt,
   }) {
@@ -473,6 +513,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (category != null) 'category': category,
       if (notes != null) 'notes': notes,
       if (wzNumber != null) 'wz_number': wzNumber,
+      if (isPaid != null) 'is_paid': isPaid,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -486,6 +527,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? category,
     Value<String?>? notes,
     Value<String?>? wzNumber,
+    Value<bool>? isPaid,
     Value<DateTime>? date,
     Value<DateTime>? createdAt,
   }) {
@@ -497,6 +539,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       category: category ?? this.category,
       notes: notes ?? this.notes,
       wzNumber: wzNumber ?? this.wzNumber,
+      isPaid: isPaid ?? this.isPaid,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -528,6 +571,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (wzNumber.present) {
       map['wz_number'] = Variable<String>(wzNumber.value);
     }
+    if (isPaid.present) {
+      map['is_paid'] = Variable<bool>(isPaid.value);
+    }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
@@ -547,6 +593,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('category: $category, ')
           ..write('notes: $notes, ')
           ..write('wzNumber: $wzNumber, ')
+          ..write('isPaid: $isPaid, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1445,6 +1492,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String category,
       Value<String?> notes,
       Value<String?> wzNumber,
+      Value<bool> isPaid,
       required DateTime date,
       Value<DateTime> createdAt,
     });
@@ -1457,6 +1505,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> category,
       Value<String?> notes,
       Value<String?> wzNumber,
+      Value<bool> isPaid,
       Value<DateTime> date,
       Value<DateTime> createdAt,
     });
@@ -1503,6 +1552,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get wzNumber => $composableBuilder(
     column: $table.wzNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPaid => $composableBuilder(
+    column: $table.isPaid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1561,6 +1615,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isPaid => $composableBuilder(
+    column: $table.isPaid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnOrderings(column),
@@ -1601,6 +1660,9 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<String> get wzNumber =>
       $composableBuilder(column: $table.wzNumber, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPaid =>
+      $composableBuilder(column: $table.isPaid, builder: (column) => column);
 
   GeneratedColumn<DateTime> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -1647,6 +1709,7 @@ class $$TransactionsTableTableManager
                 Value<String> category = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> wzNumber = const Value.absent(),
+                Value<bool> isPaid = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TransactionsCompanion(
@@ -1657,6 +1720,7 @@ class $$TransactionsTableTableManager
                 category: category,
                 notes: notes,
                 wzNumber: wzNumber,
+                isPaid: isPaid,
                 date: date,
                 createdAt: createdAt,
               ),
@@ -1669,6 +1733,7 @@ class $$TransactionsTableTableManager
                 required String category,
                 Value<String?> notes = const Value.absent(),
                 Value<String?> wzNumber = const Value.absent(),
+                Value<bool> isPaid = const Value.absent(),
                 required DateTime date,
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TransactionsCompanion.insert(
@@ -1679,6 +1744,7 @@ class $$TransactionsTableTableManager
                 category: category,
                 notes: notes,
                 wzNumber: wzNumber,
+                isPaid: isPaid,
                 date: date,
                 createdAt: createdAt,
               ),

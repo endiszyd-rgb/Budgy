@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets/amount_card.dart';
 import '../../shared/widgets/transaction_tile.dart';
 import '../settings/settings_screen.dart';
+import 'unpaid_summary_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AppDatabase db;
@@ -153,6 +154,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    UnpaidSummaryCard(db: widget.db),
                     const SizedBox(height: 20),
                     // Wykres kołowy
                     if (txList.isNotEmpty) ...[

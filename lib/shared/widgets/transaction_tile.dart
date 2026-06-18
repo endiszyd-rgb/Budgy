@@ -47,6 +47,24 @@ class TransactionTile extends StatelessWidget {
             if (transaction.wzNumber != null)
               Text('WZ: ${transaction.wzNumber}',
                   style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+            if (!transaction.isPaid)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.schedule, size: 13, color: Colors.orange.shade800),
+                    const SizedBox(width: 4),
+                    Text(
+                      isIncome ? 'Należność' : 'Zobowiązanie',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange.shade800),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         trailing: Row(
