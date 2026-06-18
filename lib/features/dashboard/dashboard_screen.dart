@@ -5,6 +5,7 @@ import '../../core/database/database.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/amount_card.dart';
 import '../../shared/widgets/transaction_tile.dart';
+import '../settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AppDatabase db;
@@ -65,6 +66,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 centerTitle: true,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: 'Ustawienia',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SettingsScreen(db: widget.db),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SliverPadding(
                 padding: const EdgeInsets.all(16),
