@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'dao/transactions_dao.dart';
+import 'dao/documents_dao.dart';
 
 part 'database.g.dart';
 
@@ -26,18 +27,38 @@ class Categories extends Table {
   IntColumn get colorValue => integer().withDefault(const Constant(0xFF2196F3))();
 }
 
-@DriftDatabase(tables: [Transactions, Categories], daos: [TransactionsDao])
+class ScannedDocuments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get imagePath => text()();
+  TextColumn get wzNumber => text().nullable()();
+  TextColumn get supplier => text().nullable()();
+  RealColumn get amount => real().nullable()();
+  TextColumn get rawText => text().nullable()();
+  IntColumn get transactionId =>
+      integer().nullable().references(Transactions, #id)();
+  DateTimeColumn get scannedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(
+  tables: [Transactions, Categories, ScannedDocuments],
+  daos: [TransactionsDao, DocumentsDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _insertDefaultCategories();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(scannedDocuments);
+          }
         },
       );
 

@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import 'package:drift/drift.dart' show Value;
 import '../transactions/add_transaction_screen.dart';
 import '../../core/database/database.dart';
 
@@ -18,6 +22,7 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
   bool _processing = false;
   String? _rawText;
   WzParseResult? _parsed;
+  int? _savedDocumentId;
 
   final _picker = ImagePicker();
 
@@ -33,6 +38,7 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
       _processing = true;
       _rawText = null;
       _parsed = null;
+      _savedDocumentId = null;
     });
     await _runOcr(xFile.path);
   }
@@ -43,9 +49,21 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
       final inputImage = InputImage.fromFilePath(imagePath);
       final recognized = await recognizer.processImage(inputImage);
       final text = recognized.text;
+      final parsed = WzParseResult.fromText(text);
+      final savedPath = await _persistImage(imagePath);
+      final documentId = await widget.db.documentsDao.insertDocument(
+        ScannedDocumentsCompanion.insert(
+          imagePath: savedPath,
+          wzNumber: Value(parsed.wzNumber),
+          supplier: Value(parsed.supplier),
+          amount: Value(parsed.amount),
+          rawText: Value(text),
+        ),
+      );
       setState(() {
         _rawText = text;
-        _parsed = WzParseResult.fromText(text);
+        _parsed = parsed;
+        _savedDocumentId = documentId;
         _processing = false;
       });
     } catch (e) {
@@ -59,6 +77,17 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
     }
   }
 
+  Future<String> _persistImage(String sourcePath) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final wzDir = Directory(p.join(docsDir.path, 'wz_documents'));
+    if (!await wzDir.exists()) await wzDir.create(recursive: true);
+    final ext = p.extension(sourcePath);
+    final fileName = '${const Uuid().v4()}$ext';
+    final destPath = p.join(wzDir.path, fileName);
+    await File(sourcePath).copy(destPath);
+    return destPath;
+  }
+
   void _proceed() {
     Navigator.pushReplacement(
       context,
@@ -69,6 +98,7 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
           prefillTitle: _parsed?.title ?? '',
           prefillAmount: _parsed?.amount,
           prefillWzNumber: _parsed?.wzNumber,
+          sourceDocumentId: _savedDocumentId,
         ),
       ),
     );
@@ -155,8 +185,22 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
             // Wyniki OCR
             if (_parsed != null) ...[
               const Divider(),
-              Text('Rozpoznane dane',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Rozpoznane dane',
+                        style: Theme.of(context).textTheme.titleLarge),
+                  ),
+                  if (_savedDocumentId != null)
+                    Chip(
+                      avatar: const Icon(Icons.check_circle,
+                          color: Colors.green, size: 18),
+                      label: const Text('Zapisano w archiwum',
+                          style: TextStyle(fontSize: 12)),
+                      backgroundColor: Colors.green.shade50,
+                    ),
+                ],
+              ),
               const SizedBox(height: 12),
               _ResultRow(label: 'Numer WZ', value: _parsed!.wzNumber ?? '—'),
               _ResultRow(label: 'Dostawca', value: _parsed!.supplier ?? '—'),

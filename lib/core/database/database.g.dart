@@ -903,14 +903,528 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   }
 }
 
+class $ScannedDocumentsTable extends ScannedDocuments
+    with TableInfo<$ScannedDocumentsTable, ScannedDocument> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScannedDocumentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wzNumberMeta = const VerificationMeta(
+    'wzNumber',
+  );
+  @override
+  late final GeneratedColumn<String> wzNumber = GeneratedColumn<String>(
+    'wz_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _supplierMeta = const VerificationMeta(
+    'supplier',
+  );
+  @override
+  late final GeneratedColumn<String> supplier = GeneratedColumn<String>(
+    'supplier',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _rawTextMeta = const VerificationMeta(
+    'rawText',
+  );
+  @override
+  late final GeneratedColumn<String> rawText = GeneratedColumn<String>(
+    'raw_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta(
+    'transactionId',
+  );
+  @override
+  late final GeneratedColumn<int> transactionId = GeneratedColumn<int>(
+    'transaction_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scannedAtMeta = const VerificationMeta(
+    'scannedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scannedAt = GeneratedColumn<DateTime>(
+    'scanned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    imagePath,
+    wzNumber,
+    supplier,
+    amount,
+    rawText,
+    transactionId,
+    scannedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'scanned_documents';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScannedDocument> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_imagePathMeta);
+    }
+    if (data.containsKey('wz_number')) {
+      context.handle(
+        _wzNumberMeta,
+        wzNumber.isAcceptableOrUnknown(data['wz_number']!, _wzNumberMeta),
+      );
+    }
+    if (data.containsKey('supplier')) {
+      context.handle(
+        _supplierMeta,
+        supplier.isAcceptableOrUnknown(data['supplier']!, _supplierMeta),
+      );
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    }
+    if (data.containsKey('raw_text')) {
+      context.handle(
+        _rawTextMeta,
+        rawText.isAcceptableOrUnknown(data['raw_text']!, _rawTextMeta),
+      );
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(
+        _transactionIdMeta,
+        transactionId.isAcceptableOrUnknown(
+          data['transaction_id']!,
+          _transactionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('scanned_at')) {
+      context.handle(
+        _scannedAtMeta,
+        scannedAt.isAcceptableOrUnknown(data['scanned_at']!, _scannedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScannedDocument map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScannedDocument(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      )!,
+      wzNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}wz_number'],
+      ),
+      supplier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplier'],
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      ),
+      rawText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}raw_text'],
+      ),
+      transactionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}transaction_id'],
+      ),
+      scannedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scanned_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ScannedDocumentsTable createAlias(String alias) {
+    return $ScannedDocumentsTable(attachedDatabase, alias);
+  }
+}
+
+class ScannedDocument extends DataClass implements Insertable<ScannedDocument> {
+  final int id;
+  final String imagePath;
+  final String? wzNumber;
+  final String? supplier;
+  final double? amount;
+  final String? rawText;
+  final int? transactionId;
+  final DateTime scannedAt;
+  const ScannedDocument({
+    required this.id,
+    required this.imagePath,
+    this.wzNumber,
+    this.supplier,
+    this.amount,
+    this.rawText,
+    this.transactionId,
+    required this.scannedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['image_path'] = Variable<String>(imagePath);
+    if (!nullToAbsent || wzNumber != null) {
+      map['wz_number'] = Variable<String>(wzNumber);
+    }
+    if (!nullToAbsent || supplier != null) {
+      map['supplier'] = Variable<String>(supplier);
+    }
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<double>(amount);
+    }
+    if (!nullToAbsent || rawText != null) {
+      map['raw_text'] = Variable<String>(rawText);
+    }
+    if (!nullToAbsent || transactionId != null) {
+      map['transaction_id'] = Variable<int>(transactionId);
+    }
+    map['scanned_at'] = Variable<DateTime>(scannedAt);
+    return map;
+  }
+
+  ScannedDocumentsCompanion toCompanion(bool nullToAbsent) {
+    return ScannedDocumentsCompanion(
+      id: Value(id),
+      imagePath: Value(imagePath),
+      wzNumber: wzNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(wzNumber),
+      supplier: supplier == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplier),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
+      rawText: rawText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rawText),
+      transactionId: transactionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(transactionId),
+      scannedAt: Value(scannedAt),
+    );
+  }
+
+  factory ScannedDocument.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScannedDocument(
+      id: serializer.fromJson<int>(json['id']),
+      imagePath: serializer.fromJson<String>(json['imagePath']),
+      wzNumber: serializer.fromJson<String?>(json['wzNumber']),
+      supplier: serializer.fromJson<String?>(json['supplier']),
+      amount: serializer.fromJson<double?>(json['amount']),
+      rawText: serializer.fromJson<String?>(json['rawText']),
+      transactionId: serializer.fromJson<int?>(json['transactionId']),
+      scannedAt: serializer.fromJson<DateTime>(json['scannedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'imagePath': serializer.toJson<String>(imagePath),
+      'wzNumber': serializer.toJson<String?>(wzNumber),
+      'supplier': serializer.toJson<String?>(supplier),
+      'amount': serializer.toJson<double?>(amount),
+      'rawText': serializer.toJson<String?>(rawText),
+      'transactionId': serializer.toJson<int?>(transactionId),
+      'scannedAt': serializer.toJson<DateTime>(scannedAt),
+    };
+  }
+
+  ScannedDocument copyWith({
+    int? id,
+    String? imagePath,
+    Value<String?> wzNumber = const Value.absent(),
+    Value<String?> supplier = const Value.absent(),
+    Value<double?> amount = const Value.absent(),
+    Value<String?> rawText = const Value.absent(),
+    Value<int?> transactionId = const Value.absent(),
+    DateTime? scannedAt,
+  }) => ScannedDocument(
+    id: id ?? this.id,
+    imagePath: imagePath ?? this.imagePath,
+    wzNumber: wzNumber.present ? wzNumber.value : this.wzNumber,
+    supplier: supplier.present ? supplier.value : this.supplier,
+    amount: amount.present ? amount.value : this.amount,
+    rawText: rawText.present ? rawText.value : this.rawText,
+    transactionId: transactionId.present
+        ? transactionId.value
+        : this.transactionId,
+    scannedAt: scannedAt ?? this.scannedAt,
+  );
+  ScannedDocument copyWithCompanion(ScannedDocumentsCompanion data) {
+    return ScannedDocument(
+      id: data.id.present ? data.id.value : this.id,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      wzNumber: data.wzNumber.present ? data.wzNumber.value : this.wzNumber,
+      supplier: data.supplier.present ? data.supplier.value : this.supplier,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      rawText: data.rawText.present ? data.rawText.value : this.rawText,
+      transactionId: data.transactionId.present
+          ? data.transactionId.value
+          : this.transactionId,
+      scannedAt: data.scannedAt.present ? data.scannedAt.value : this.scannedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScannedDocument(')
+          ..write('id: $id, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('wzNumber: $wzNumber, ')
+          ..write('supplier: $supplier, ')
+          ..write('amount: $amount, ')
+          ..write('rawText: $rawText, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('scannedAt: $scannedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    imagePath,
+    wzNumber,
+    supplier,
+    amount,
+    rawText,
+    transactionId,
+    scannedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScannedDocument &&
+          other.id == this.id &&
+          other.imagePath == this.imagePath &&
+          other.wzNumber == this.wzNumber &&
+          other.supplier == this.supplier &&
+          other.amount == this.amount &&
+          other.rawText == this.rawText &&
+          other.transactionId == this.transactionId &&
+          other.scannedAt == this.scannedAt);
+}
+
+class ScannedDocumentsCompanion extends UpdateCompanion<ScannedDocument> {
+  final Value<int> id;
+  final Value<String> imagePath;
+  final Value<String?> wzNumber;
+  final Value<String?> supplier;
+  final Value<double?> amount;
+  final Value<String?> rawText;
+  final Value<int?> transactionId;
+  final Value<DateTime> scannedAt;
+  const ScannedDocumentsCompanion({
+    this.id = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.wzNumber = const Value.absent(),
+    this.supplier = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.rawText = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.scannedAt = const Value.absent(),
+  });
+  ScannedDocumentsCompanion.insert({
+    this.id = const Value.absent(),
+    required String imagePath,
+    this.wzNumber = const Value.absent(),
+    this.supplier = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.rawText = const Value.absent(),
+    this.transactionId = const Value.absent(),
+    this.scannedAt = const Value.absent(),
+  }) : imagePath = Value(imagePath);
+  static Insertable<ScannedDocument> custom({
+    Expression<int>? id,
+    Expression<String>? imagePath,
+    Expression<String>? wzNumber,
+    Expression<String>? supplier,
+    Expression<double>? amount,
+    Expression<String>? rawText,
+    Expression<int>? transactionId,
+    Expression<DateTime>? scannedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (imagePath != null) 'image_path': imagePath,
+      if (wzNumber != null) 'wz_number': wzNumber,
+      if (supplier != null) 'supplier': supplier,
+      if (amount != null) 'amount': amount,
+      if (rawText != null) 'raw_text': rawText,
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (scannedAt != null) 'scanned_at': scannedAt,
+    });
+  }
+
+  ScannedDocumentsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? imagePath,
+    Value<String?>? wzNumber,
+    Value<String?>? supplier,
+    Value<double?>? amount,
+    Value<String?>? rawText,
+    Value<int?>? transactionId,
+    Value<DateTime>? scannedAt,
+  }) {
+    return ScannedDocumentsCompanion(
+      id: id ?? this.id,
+      imagePath: imagePath ?? this.imagePath,
+      wzNumber: wzNumber ?? this.wzNumber,
+      supplier: supplier ?? this.supplier,
+      amount: amount ?? this.amount,
+      rawText: rawText ?? this.rawText,
+      transactionId: transactionId ?? this.transactionId,
+      scannedAt: scannedAt ?? this.scannedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
+    if (wzNumber.present) {
+      map['wz_number'] = Variable<String>(wzNumber.value);
+    }
+    if (supplier.present) {
+      map['supplier'] = Variable<String>(supplier.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (rawText.present) {
+      map['raw_text'] = Variable<String>(rawText.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<int>(transactionId.value);
+    }
+    if (scannedAt.present) {
+      map['scanned_at'] = Variable<DateTime>(scannedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScannedDocumentsCompanion(')
+          ..write('id: $id, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('wzNumber: $wzNumber, ')
+          ..write('supplier: $supplier, ')
+          ..write('amount: $amount, ')
+          ..write('rawText: $rawText, ')
+          ..write('transactionId: $transactionId, ')
+          ..write('scannedAt: $scannedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $ScannedDocumentsTable scannedDocuments = $ScannedDocumentsTable(
+    this,
+  );
   late final TransactionsDao transactionsDao = TransactionsDao(
     this as AppDatabase,
   );
+  late final DocumentsDao documentsDao = DocumentsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -918,6 +1432,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     transactions,
     categories,
+    scannedDocuments,
   ];
 }
 
@@ -1383,6 +1898,265 @@ typedef $$CategoriesTableProcessedTableManager =
       Category,
       PrefetchHooks Function()
     >;
+typedef $$ScannedDocumentsTableCreateCompanionBuilder =
+    ScannedDocumentsCompanion Function({
+      Value<int> id,
+      required String imagePath,
+      Value<String?> wzNumber,
+      Value<String?> supplier,
+      Value<double?> amount,
+      Value<String?> rawText,
+      Value<int?> transactionId,
+      Value<DateTime> scannedAt,
+    });
+typedef $$ScannedDocumentsTableUpdateCompanionBuilder =
+    ScannedDocumentsCompanion Function({
+      Value<int> id,
+      Value<String> imagePath,
+      Value<String?> wzNumber,
+      Value<String?> supplier,
+      Value<double?> amount,
+      Value<String?> rawText,
+      Value<int?> transactionId,
+      Value<DateTime> scannedAt,
+    });
+
+class $$ScannedDocumentsTableFilterComposer
+    extends Composer<_$AppDatabase, $ScannedDocumentsTable> {
+  $$ScannedDocumentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get wzNumber => $composableBuilder(
+    column: $table.wzNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplier => $composableBuilder(
+    column: $table.supplier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rawText => $composableBuilder(
+    column: $table.rawText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scannedAt => $composableBuilder(
+    column: $table.scannedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScannedDocumentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ScannedDocumentsTable> {
+  $$ScannedDocumentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get wzNumber => $composableBuilder(
+    column: $table.wzNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplier => $composableBuilder(
+    column: $table.supplier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rawText => $composableBuilder(
+    column: $table.rawText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get scannedAt => $composableBuilder(
+    column: $table.scannedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScannedDocumentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ScannedDocumentsTable> {
+  $$ScannedDocumentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get wzNumber =>
+      $composableBuilder(column: $table.wzNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get supplier =>
+      $composableBuilder(column: $table.supplier, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get rawText =>
+      $composableBuilder(column: $table.rawText, builder: (column) => column);
+
+  GeneratedColumn<int> get transactionId => $composableBuilder(
+    column: $table.transactionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get scannedAt =>
+      $composableBuilder(column: $table.scannedAt, builder: (column) => column);
+}
+
+class $$ScannedDocumentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScannedDocumentsTable,
+          ScannedDocument,
+          $$ScannedDocumentsTableFilterComposer,
+          $$ScannedDocumentsTableOrderingComposer,
+          $$ScannedDocumentsTableAnnotationComposer,
+          $$ScannedDocumentsTableCreateCompanionBuilder,
+          $$ScannedDocumentsTableUpdateCompanionBuilder,
+          (
+            ScannedDocument,
+            BaseReferences<
+              _$AppDatabase,
+              $ScannedDocumentsTable,
+              ScannedDocument
+            >,
+          ),
+          ScannedDocument,
+          PrefetchHooks Function()
+        > {
+  $$ScannedDocumentsTableTableManager(
+    _$AppDatabase db,
+    $ScannedDocumentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScannedDocumentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScannedDocumentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScannedDocumentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> imagePath = const Value.absent(),
+                Value<String?> wzNumber = const Value.absent(),
+                Value<String?> supplier = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> rawText = const Value.absent(),
+                Value<int?> transactionId = const Value.absent(),
+                Value<DateTime> scannedAt = const Value.absent(),
+              }) => ScannedDocumentsCompanion(
+                id: id,
+                imagePath: imagePath,
+                wzNumber: wzNumber,
+                supplier: supplier,
+                amount: amount,
+                rawText: rawText,
+                transactionId: transactionId,
+                scannedAt: scannedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String imagePath,
+                Value<String?> wzNumber = const Value.absent(),
+                Value<String?> supplier = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> rawText = const Value.absent(),
+                Value<int?> transactionId = const Value.absent(),
+                Value<DateTime> scannedAt = const Value.absent(),
+              }) => ScannedDocumentsCompanion.insert(
+                id: id,
+                imagePath: imagePath,
+                wzNumber: wzNumber,
+                supplier: supplier,
+                amount: amount,
+                rawText: rawText,
+                transactionId: transactionId,
+                scannedAt: scannedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScannedDocumentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScannedDocumentsTable,
+      ScannedDocument,
+      $$ScannedDocumentsTableFilterComposer,
+      $$ScannedDocumentsTableOrderingComposer,
+      $$ScannedDocumentsTableAnnotationComposer,
+      $$ScannedDocumentsTableCreateCompanionBuilder,
+      $$ScannedDocumentsTableUpdateCompanionBuilder,
+      (
+        ScannedDocument,
+        BaseReferences<_$AppDatabase, $ScannedDocumentsTable, ScannedDocument>,
+      ),
+      ScannedDocument,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1391,4 +2165,6 @@ class $AppDatabaseManager {
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
+  $$ScannedDocumentsTableTableManager get scannedDocuments =>
+      $$ScannedDocumentsTableTableManager(_db, _db.scannedDocuments);
 }

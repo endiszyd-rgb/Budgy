@@ -8,6 +8,7 @@ import 'features/transactions/transactions_screen.dart';
 import 'features/transactions/add_transaction_screen.dart';
 import 'features/scanner/wz_scanner_screen.dart';
 import 'features/reports/reports_screen.dart';
+import 'features/documents/documents_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     _screens = [
       DashboardScreen(db: widget.db),
       TransactionsScreen(db: widget.db),
+      DocumentsScreen(db: widget.db),
       ReportsScreen(db: widget.db),
     ];
   }
@@ -95,6 +97,10 @@ class _MainScaffoldState extends State<MainScaffold> {
               icon: Icon(Icons.list_alt_outlined),
               selectedIcon: Icon(Icons.list_alt),
               label: 'Historia'),
+          NavigationDestination(
+              icon: Icon(Icons.folder_outlined),
+              selectedIcon: Icon(Icons.folder),
+              label: 'Dokumenty'),
           NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),
               selectedIcon: Icon(Icons.bar_chart),

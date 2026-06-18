@@ -10,6 +10,7 @@ class AddTransactionScreen extends StatefulWidget {
   final String? prefillTitle;
   final double? prefillAmount;
   final String? prefillWzNumber;
+  final int? sourceDocumentId;
 
   const AddTransactionScreen({
     super.key,
@@ -18,6 +19,7 @@ class AddTransactionScreen extends StatefulWidget {
     this.prefillTitle,
     this.prefillAmount,
     this.prefillWzNumber,
+    this.sourceDocumentId,
   });
 
   @override
@@ -86,7 +88,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       return;
     }
     setState(() => _saving = true);
-    await widget.db.transactionsDao.insertTransaction(
+    final transactionId = await widget.db.transactionsDao.insertTransaction(
       TransactionsCompanion.insert(
         title: _titleCtrl.text.trim(),
         amount: double.parse(_amountCtrl.text.replaceAll(',', '.')),
@@ -97,6 +99,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         date: _selectedDate,
       ),
     );
+    if (widget.sourceDocumentId != null) {
+      await widget.db.documentsDao
+          .linkTransaction(widget.sourceDocumentId!, transactionId);
+    }
     if (mounted) Navigator.pop(context, true);
   }
 
