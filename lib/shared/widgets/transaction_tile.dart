@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/database/database.dart';
 import '../../core/theme.dart';
+import '../../features/documents/document_viewer_screen.dart';
 
 class TransactionTile extends StatelessWidget {
   final Transaction transaction;
+  final AppDatabase? db;
   final VoidCallback? onDelete;
 
-  const TransactionTile({super.key, required this.transaction, this.onDelete});
+  const TransactionTile({
+    super.key,
+    required this.transaction,
+    this.db,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,20 +49,48 @@ class TransactionTile extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${isIncome ? '+' : '-'}${formatter.format(transaction.amount)}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
+            if (db != null)
+              FutureBuilder<ScannedDocument?>(
+                future: db!.documentsDao
+                    .getDocumentByTransactionId(transaction.id),
+                builder: (context, snapshot) {
+                  final document = snapshot.data;
+                  if (document == null) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: const Icon(Icons.image_outlined),
+                    tooltip: 'Zobacz zeskanowany dokument',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DocumentViewerScreen(
+                          document: document,
+                          onDelete: () =>
+                              db!.documentsDao.deleteDocument(document.id),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${isIncome ? '+' : '-'}${formatter.format(transaction.amount)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
+                  ),
+                ),
+                Text(dateFormatter.format(transaction.date),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
             ),
-            Text(dateFormatter.format(transaction.date),
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
         onLongPress: onDelete != null

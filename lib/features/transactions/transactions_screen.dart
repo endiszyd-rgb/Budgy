@@ -110,6 +110,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   ),
                   ...items.map((t) => TransactionTile(
                         transaction: t,
+                        db: widget.db,
                         onDelete: () => widget.db.transactionsDao
                             .deleteTransaction(t.id),
                       )),

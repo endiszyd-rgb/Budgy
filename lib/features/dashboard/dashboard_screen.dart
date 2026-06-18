@@ -183,6 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     else
                       ...txList.take(10).map((t) => TransactionTile(
                             transaction: t,
+                            db: widget.db,
                             onDelete: () => widget.db.transactionsDao
                                 .deleteTransaction(t.id),
                           )),

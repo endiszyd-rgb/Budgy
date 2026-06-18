@@ -16,6 +16,11 @@ class DocumentsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertDocument(ScannedDocumentsCompanion entry) =>
       into(scannedDocuments).insert(entry);
 
+  Future<ScannedDocument?> getDocumentByTransactionId(int transactionId) =>
+      (select(scannedDocuments)
+            ..where((d) => d.transactionId.equals(transactionId)))
+          .getSingleOrNull();
+
   Future<void> linkTransaction(int documentId, int transactionId) =>
       (update(scannedDocuments)..where((d) => d.id.equals(documentId)))
           .write(ScannedDocumentsCompanion(

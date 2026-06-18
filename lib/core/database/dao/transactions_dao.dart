@@ -54,6 +54,12 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertCategory(CategoriesCompanion entry) =>
       into(categories).insert(entry);
 
+  Future<bool> updateCategory(Category category) =>
+      update(categories).replace(category);
+
+  Future<int> deleteCategory(int id) =>
+      (delete(categories)..where((c) => c.id.equals(id))).go();
+
   Future<Map<String, double>> getSumByCategory(int year, int month, TransactionType type) async {
     final start = DateTime(year, month, 1);
     final end = DateTime(year, month + 1, 1);

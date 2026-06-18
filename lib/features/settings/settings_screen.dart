@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import '../../core/backup/drive_backup_service.dart';
 import '../../core/database/database.dart';
+import '../categories/categories_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final AppDatabase db;
@@ -257,6 +258,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.category_outlined, size: 28),
+              title: const Text('Kategorie'),
+              subtitle: const Text('Zmień nazwy, dodaj lub usuń kategorie'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CategoriesScreen(db: widget.db),
+                ),
               ),
             ),
           ),
