@@ -2,53 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/database/database.dart';
 import '../../core/theme.dart';
+import '../../shared/widgets/unpaid_payment_tile.dart';
 
-class UnpaidSummaryCard extends StatelessWidget {
+/// Para kart "Należności od klientów" / "Zobowiązania wobec hurtowni",
+/// pokazana jako dwie samodzielne karty obok siebie.
+class UnpaidSummaryRow extends StatelessWidget {
   final AppDatabase db;
-  const UnpaidSummaryCard({super.key, required this.db});
+  const UnpaidSummaryRow({super.key, required this.db});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.account_balance_wallet_outlined, size: 22),
-                const SizedBox(width: 8),
-                Text('Należności i zobowiązania',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _UnpaidRow(
-              db: db,
-              type: TransactionType.income,
-              label: 'Należności od klientów',
-              hint: 'czeka na wpłatę',
-              color: AppTheme.incomeColor,
-              icon: Icons.arrow_circle_down_outlined,
-            ),
-            const Divider(height: 20),
-            _UnpaidRow(
-              db: db,
-              type: TransactionType.expense,
-              label: 'Zobowiązania wobec hurtowni',
-              hint: 'do zapłaty',
-              color: AppTheme.expenseColor,
-              icon: Icons.arrow_circle_up_outlined,
-            ),
-          ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _UnpaidCard(
+            db: db,
+            type: TransactionType.income,
+            label: 'Należności od klientów',
+            hint: 'czeka na wpłatę',
+            color: AppTheme.incomeColor,
+            icon: Icons.arrow_circle_down_outlined,
+          ),
         ),
-      ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _UnpaidCard(
+            db: db,
+            type: TransactionType.expense,
+            label: 'Zobowiązania wobec hurtowni',
+            hint: 'do zapłaty',
+            color: AppTheme.expenseColor,
+            icon: Icons.arrow_circle_up_outlined,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _UnpaidRow extends StatelessWidget {
+class _UnpaidCard extends StatelessWidget {
   final AppDatabase db;
   final TransactionType type;
   final String label;
@@ -56,7 +49,7 @@ class _UnpaidRow extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _UnpaidRow({
+  const _UnpaidCard({
     required this.db,
     required this.type,
     required this.label,
@@ -68,23 +61,27 @@ class _UnpaidRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final moneyFmt = NumberFormat.currency(locale: 'pl_PL', symbol: 'zł');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return StreamBuilder<List<Transaction>>(
       stream: db.transactionsDao.watchUnpaidByType(type),
       builder: (context, snapshot) {
         final items = snapshot.data ?? [];
-        final total = items.fold(0.0, (s, t) => s + t.amount);
+        final total = items.fold(0.0, (s, t) => s + (t.amount - t.paidAmount));
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: items.isEmpty
-              ? null
-              : () => showModalBottomSheet(
+        return Card(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: items.isEmpty
+                ? null
+                : () => showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     shape: const RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(20))),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
                     builder: (_) => _UnpaidListSheet(
                       db: db,
                       type: type,
@@ -92,36 +89,57 @@ class _UnpaidRow extends StatelessWidget {
                       color: color,
                     ),
                   ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              children: [
-                Icon(icon, color: color, size: 26),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(label, style: const TextStyle(fontSize: 14)),
-                      Text(
-                        items.isEmpty
-                            ? 'Wszystko rozliczone ✓'
-                            : '${items.length} ${items.length == 1 ? "pozycja" : "pozycji"} • $hint',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: items.isEmpty ? Colors.grey : color),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(isDark ? 0.22 : 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(icon, color: color, size: 22),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      if (items.isNotEmpty)
+                        Icon(
+                          Icons.chevron_right,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                     ],
                   ),
-                ),
-                Text(
-                  moneyFmt.format(total),
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: color),
-                ),
-                if (items.isNotEmpty)
-                  const Icon(Icons.chevron_right, color: Colors.grey),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    moneyFmt.format(total),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineMedium?.copyWith(color: color),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    items.isEmpty
+                        ? 'Wszystko rozliczone ✓'
+                        : '${items.length} ${items.length == 1 ? "pozycja" : "pozycji"} • $hint',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: items.isEmpty
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : color,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -145,9 +163,6 @@ class _UnpaidListSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final moneyFmt = NumberFormat.currency(locale: 'pl_PL', symbol: 'zł');
-    final dateFmt = DateFormat('dd.MM.yyyy', 'pl_PL');
-
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.3,
@@ -160,47 +175,32 @@ class _UnpaidListSheet extends StatelessWidget {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(title,
-                    style: Theme.of(context).textTheme.titleLarge),
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
               if (items.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text('Wszystko rozliczone ✓',
-                      style: TextStyle(color: Colors.grey)),
+                Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    'Wszystko rozliczone ✓',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: items.length,
-                  itemBuilder: (context, i) {
-                    final t = items[i];
-                    return ListTile(
-                      title: Text(t.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text(
-                          '${t.category} • ${dateFmt.format(t.date)}'),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(moneyFmt.format(t.amount),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, color: color)),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 28)),
-                            onPressed: () =>
-                                db.transactionsDao.setPaidStatus(t.id, true),
-                            child: const Text('Oznacz jako rozliczone',
-                                style: TextStyle(fontSize: 11)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  itemBuilder: (context, i) => UnpaidPaymentTile(
+                    db: db,
+                    transaction: items[i],
+                    color: color,
+                  ),
                 ),
               ),
             ],

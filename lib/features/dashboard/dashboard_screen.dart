@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import '../../core/database/database.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/amount_card.dart';
+import '../../shared/widgets/hover_lift.dart';
+import '../../shared/widgets/staggered_fade_in.dart';
 import '../../shared/widgets/transaction_tile.dart';
-import '../settings/settings_screen.dart';
+import '../../shared/widgets/responsive_page.dart';
 import 'unpaid_summary_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -25,17 +27,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _selectedMonth = DateTime.now();
   }
 
-  void _prevMonth() =>
-      setState(() => _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1));
-  void _nextMonth() =>
-      setState(() => _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1));
+  void _prevMonth() => setState(
+    () => _selectedMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month - 1,
+    ),
+  );
+  void _nextMonth() => setState(
+    () => _selectedMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: _MonthSwitcher(
+              month: _selectedMonth,
+              onPrev: _prevMonth,
+              onNext: _nextMonth,
+            ),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Transaction>>(
         stream: widget.db.transactionsDao.watchTransactionsByMonth(
-            _selectedMonth.year, _selectedMonth.month),
+          _selectedMonth.year,
+          _selectedMonth.month,
+        ),
         builder: (context, snapshot) {
           final txList = snapshot.data ?? [];
           final income = txList
@@ -46,96 +71,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
               .fold(0.0, (s, t) => s + t.amount);
           final balance = income - expense;
 
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 80,
-                floating: true,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                        onPressed: _prevMonth,
-                        icon: const Icon(Icons.chevron_left)),
-                    Text(
-                      DateFormat('MMMM yyyy', 'pl_PL').format(_selectedMonth),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                    ),
-                    IconButton(
-                        onPressed: _nextMonth,
-                        icon: const Icon(Icons.chevron_right)),
-                  ],
-                ),
-                centerTitle: true,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Ustawienia',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SettingsScreen(db: widget.db),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Bilans
-                    Card(
-                      color: balance >= 0
-                          ? AppTheme.incomeColor.withOpacity(0.1)
-                          : AppTheme.expenseColor.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('BILANS MIESIĘCZNY',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.2,
-                                        color: Colors.grey)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  NumberFormat.currency(
-                                          locale: 'pl_PL', symbol: 'zł')
-                                      .format(balance),
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: balance >= 0
-                                        ? AppTheme.incomeColor
-                                        : AppTheme.expenseColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(
-                              balance >= 0
-                                  ? Icons.trending_up
-                                  : Icons.trending_down,
-                              size: 48,
-                              color: balance >= 0
-                                  ? AppTheme.incomeColor
-                                  : AppTheme.expenseColor,
-                            ),
-                          ],
+          return SingleChildScrollView(
+            child: ResponsivePage(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: StaggeredFadeIn(
+                          index: 0,
+                          child: AmountCard(
+                            label: 'Bilans miesięczny',
+                            amount: balance,
+                            color: balance >= 0
+                                ? AppTheme.incomeColor
+                                : AppTheme.expenseColor,
+                            icon: balance >= 0
+                                ? Icons.trending_up
+                                : Icons.trending_down,
+                            hero: true,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Karty przychody / wydatki
-                    Row(
-                      children: [
-                        Expanded(
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: StaggeredFadeIn(
+                          index: 1,
                           child: AmountCard(
                             label: 'Przychody',
                             amount: income,
@@ -143,8 +107,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             icon: Icons.arrow_upward,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: StaggeredFadeIn(
+                          index: 2,
                           child: AmountCard(
                             label: 'Wydatki',
                             amount: expense,
@@ -152,116 +119,264 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             icon: Icons.arrow_downward,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    UnpaidSummaryCard(db: widget.db),
-                    const SizedBox(height: 20),
-                    // Wykres kołowy
-                    if (txList.isNotEmpty) ...[
-                      Text('Struktura wydatków',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 200,
-                        child: _buildPieChart(txList),
                       ),
-                      const SizedBox(height: 20),
                     ],
-                    // Ostatnie transakcje
-                    Text('Ostatnie transakcje',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    if (txList.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Center(
-                          child: Text(
-                            'Brak transakcji w tym miesiącu.\nDodaj pierwszą przyciskiem +',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
-                          ),
+                  ),
+                  const SizedBox(height: 24),
+                  StaggeredFadeIn(
+                    index: 3,
+                    child: UnpaidSummaryRow(db: widget.db),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: StaggeredFadeIn(
+                          index: 4,
+                          child: _ExpenseChartCard(txList: txList),
                         ),
-                      )
-                    else
-                      ...txList.take(10).map((t) => TransactionTile(
-                            transaction: t,
-                            db: widget.db,
-                            onDelete: () => widget.db.transactionsDao
-                                .deleteTransaction(t.id),
-                          )),
-                  ]),
-                ),
+                      ),
+                      const SizedBox(width: 32),
+                      Expanded(
+                        flex: 7,
+                        child: _RecentTransactionsSection(
+                          txList: txList,
+                          db: widget.db,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildPieChart(List<Transaction> txList) {
+class _MonthSwitcher extends StatelessWidget {
+  final DateTime month;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  const _MonthSwitcher({
+    required this.month,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
+          Text(
+            DateFormat('MMMM yyyy', 'pl_PL').format(month),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          IconButton(onPressed: onNext, icon: const Icon(Icons.chevron_right)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpenseChartCard extends StatelessWidget {
+  final List<Transaction> txList;
+  const _ExpenseChartCard({required this.txList});
+
+  @override
+  Widget build(BuildContext context) {
     final expenses = txList.where((t) => t.type == TransactionType.expense);
     final Map<String, double> byCategory = {};
     for (final t in expenses) {
       byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
     }
-    if (byCategory.isEmpty) return const SizedBox();
+    final total = byCategory.values.fold(0.0, (s, v) => s + v);
+    final moneyFmt = NumberFormat.currency(locale: 'pl_PL', symbol: 'zł');
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
-    final colors = [
-      Colors.red, Colors.orange, Colors.purple, Colors.blue,
-      Colors.teal, Colors.green, Colors.indigo, Colors.pink,
+    const colors = [
+      AppPalette.indigo500,
+      AppPalette.rose600,
+      AppPalette.amber600,
+      AppPalette.emerald600,
+      AppPalette.indigo300,
+      AppPalette.slate500,
+      AppPalette.rose400,
+      AppPalette.slate400,
     ];
-    final entries = byCategory.entries.toList();
+    final entries = byCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Row(
-      children: [
-        Expanded(
-          child: PieChart(
-            PieChartData(
-              sections: List.generate(entries.length, (i) {
-                final e = entries[i];
-                return PieChartSectionData(
-                  value: e.value,
-                  color: colors[i % colors.length],
-                  title: '',
-                  radius: 70,
-                );
-              }),
-              sectionsSpace: 2,
-              centerSpaceRadius: 30,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
+    return HoverLift(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(entries.length, (i) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: [
-                    Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: colors[i % colors.length],
-                          shape: BoxShape.circle,
-                        )),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(entries[i].key,
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis),
+            children: [
+              Text(
+                'Struktura wydatków',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              if (entries.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Text(
+                      'Brak wydatków w tym miesiącu',
+                      style: TextStyle(color: muted),
                     ),
-                  ],
+                  ),
+                )
+              else ...[
+                SizedBox(
+                  height: 220,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      PieChart(
+                        PieChartData(
+                          sections: List.generate(entries.length, (i) {
+                            final e = entries[i];
+                            return PieChartSectionData(
+                              value: e.value,
+                              color: colors[i % colors.length],
+                              title: '',
+                              radius: 38,
+                            );
+                          }),
+                          sectionsSpace: 3,
+                          centerSpaceRadius: 64,
+                        ),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOutCubic,
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Łącznie',
+                            style: TextStyle(fontSize: 12, color: muted),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            moneyFmt.format(total),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: AppTheme.expenseColor),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            }),
+                const SizedBox(height: 20),
+                Column(
+                  children: List.generate(entries.length, (i) {
+                    final e = entries[i];
+                    final pct = total > 0 ? e.value / total : 0.0;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: colors[i % colors.length],
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              e.key,
+                              style: const TextStyle(fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${(pct * 100).toStringAsFixed(0)}%',
+                            style: TextStyle(fontSize: 13, color: muted),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            moneyFmt.format(e.value),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RecentTransactionsSection extends StatelessWidget {
+  final List<Transaction> txList;
+  final AppDatabase db;
+  const _RecentTransactionsSection({required this.txList, required this.db});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ostatnie transakcje',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 12),
+        if (txList.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Center(
+                child: Text(
+                  'Brak transakcji w tym miesiącu.\nDodaj pierwszą przyciskiem "Dodaj".',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          ...txList.take(8).indexed.map((entry) {
+            final (i, t) = entry;
+            return StaggeredFadeIn(
+              index: i,
+              child: TransactionTile(
+                transaction: t,
+                db: db,
+                onDelete: () => db.transactionsDao.deleteTransaction(t.id),
+              ),
+            );
+          }),
       ],
     );
   }

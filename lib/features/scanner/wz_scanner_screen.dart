@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' show Value;
 import '../transactions/add_transaction_screen.dart';
 import '../../core/database/database.dart';
+import '../../core/transitions.dart';
 
 class WzScannerScreen extends StatefulWidget {
   final AppDatabase db;
@@ -69,8 +70,9 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
     } catch (e) {
       setState(() => _processing = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Błąd OCR: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Błąd OCR: $e')));
       }
     } finally {
       recognizer.close();
@@ -91,8 +93,8 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
   void _proceed() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => AddTransactionScreen(
+      premiumRoute(
+        AddTransactionScreen(
           db: widget.db,
           initialType: TransactionType.expense,
           prefillTitle: _parsed?.title ?? '',
@@ -145,7 +147,8 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
                     icon: const Icon(Icons.camera_alt, size: 28),
                     label: const Text('Aparat', style: TextStyle(fontSize: 16)),
                     style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -155,9 +158,13 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
                         ? null
                         : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library, size: 28),
-                    label: const Text('Galeria', style: TextStyle(fontSize: 16)),
+                    label: const Text(
+                      'Galeria',
+                      style: TextStyle(fontSize: 16),
+                    ),
                     style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                   ),
                 ),
               ],
@@ -188,15 +195,22 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Rozpoznane dane',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    child: Text(
+                      'Rozpoznane dane',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                   ),
                   if (_savedDocumentId != null)
                     Chip(
-                      avatar: const Icon(Icons.check_circle,
-                          color: Colors.green, size: 18),
-                      label: const Text('Zapisano w archiwum',
-                          style: TextStyle(fontSize: 12)),
+                      avatar: const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 18,
+                      ),
+                      label: const Text(
+                        'Zapisano w archiwum',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       backgroundColor: Colors.green.shade50,
                     ),
                 ],
@@ -205,23 +219,30 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
               _ResultRow(label: 'Numer WZ', value: _parsed!.wzNumber ?? '—'),
               _ResultRow(label: 'Dostawca', value: _parsed!.supplier ?? '—'),
               _ResultRow(
-                  label: 'Kwota',
-                  value: _parsed!.amount != null
-                      ? '${_parsed!.amount!.toStringAsFixed(2)} zł'
-                      : '—'),
+                label: 'Kwota',
+                value: _parsed!.amount != null
+                    ? '${_parsed!.amount!.toStringAsFixed(2)} zł'
+                    : '—',
+              ),
               _ResultRow(label: 'Data', value: _parsed!.date ?? '—'),
               const SizedBox(height: 8),
               Card(
                 color: Colors.grey.shade100,
                 child: ExpansionTile(
-                  title: const Text('Surowy tekst OCR',
-                      style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  title: const Text(
+                    'Surowy tekst OCR',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Text(_rawText ?? '',
-                          style: const TextStyle(
-                              fontSize: 11, fontFamily: 'monospace')),
+                      child: Text(
+                        _rawText ?? '',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -230,8 +251,10 @@ class _WzScannerScreenState extends State<WzScannerScreen> {
               ElevatedButton.icon(
                 onPressed: _proceed,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text('Przejdź do formularza',
-                    style: TextStyle(fontSize: 16)),
+                label: const Text(
+                  'Przejdź do formularza',
+                  style: TextStyle(fontSize: 16),
+                ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -259,12 +282,15 @@ class _ResultRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
           ),
-          Expanded(
-              child: Text(value, style: const TextStyle(fontSize: 16))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
         ],
       ),
     );
@@ -304,8 +330,9 @@ class WzParseResult {
 
     // Kwota: szuka wartości z PLN/zł lub dużych liczb dziesiętnych
     final amountRegex = RegExp(
-        r'(\d{1,6}[.,]\d{2})\s*(z[łl]|PLN|pln)',
-        caseSensitive: false);
+      r'(\d{1,6}[.,]\d{2})\s*(z[łl]|PLN|pln)',
+      caseSensitive: false,
+    );
     double? maxAmount;
     for (final m in amountRegex.allMatches(text)) {
       final val = double.tryParse(m.group(1)!.replaceAll(',', '.'));

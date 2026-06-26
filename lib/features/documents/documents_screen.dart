@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/database/database.dart';
+import '../../core/transitions.dart';
+import '../../shared/widgets/hover_lift.dart';
+import '../../shared/widgets/responsive_page.dart';
+import '../../shared/widgets/staggered_fade_in.dart';
 import 'document_viewer_screen.dart';
 
 class DocumentsScreen extends StatelessWidget {
@@ -20,13 +24,16 @@ class DocumentsScreen extends StatelessWidget {
           }
           final docs = snapshot.data!;
           if (docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Text(
-                  'Brak zeskanowanych dokumentów.\nUżyj przycisku + → "Skanuj dokument WZ"',
+                  'Brak zeskanowanych dokumentów.\nUżyj przycisku "Dodaj" → "Skanuj dokument WZ"',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             );
@@ -40,43 +47,60 @@ class DocumentsScreen extends StatelessWidget {
             grouped.putIfAbsent(key, () => []).add(doc);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: grouped.length,
-            itemBuilder: (ctx, i) {
-              final key = grouped.keys.elementAt(i);
-              final items = grouped[key]!;
-              return Column(
+          // Indeks globalny per dokument (dla kaskady animacji) — wyliczony
+          // z wyprzedzeniem, bo GridView.builder może wywołać itemBuilder
+          // wielokrotnie dla tego samego j w trakcie layoutu.
+          var runningIndex = 0;
+          final groupStartIndex = <String, int>{};
+          for (final key in grouped.keys) {
+            groupStartIndex[key] = runningIndex;
+            runningIndex += grouped[key]!.length;
+          }
+
+          return SingleChildScrollView(
+            child: ResponsivePage(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Text(
-                      key,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                          fontSize: 13),
-                    ),
-                  ),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 220,
-                      childAspectRatio: 0.75,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                    ),
-                    itemCount: items.length,
-                    itemBuilder: (ctx, j) =>
-                        _DocumentThumbnail(document: items[j], db: db),
-                  ),
-                ],
-              );
-            },
+                children: grouped.keys.map((key) {
+                  final items = grouped[key]!;
+                  final startIndex = groupStartIndex[key]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 16, 4, 12),
+                        child: Text(
+                          key,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 260,
+                              childAspectRatio: 0.78,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                        itemCount: items.length,
+                        itemBuilder: (ctx, j) => StaggeredFadeIn(
+                          index: startIndex + j,
+                          child: _DocumentThumbnail(document: items[j], db: db),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
           );
         },
       ),
@@ -94,80 +118,102 @@ class _DocumentThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeFmt = DateFormat('HH:mm', 'pl_PL');
     final moneyFmt = NumberFormat.currency(locale: 'pl_PL', symbol: 'zł');
+    final scheme = Theme.of(context).colorScheme;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DocumentViewerScreen(
-              document: document,
-              onDelete: () => db.documentsDao.deleteDocument(document.id),
+    return HoverLift(
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            premiumRoute(
+              DocumentViewerScreen(
+                document: document,
+                onDelete: () => db.documentsDao.deleteDocument(document.id),
+              ),
             ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.file(
-                    File(document.imagePath),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.broken_image,
-                          color: Colors.grey, size: 40),
-                    ),
-                  ),
-                  if (document.transactionId != null)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.file(
+                      File(document.imagePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: scheme.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.broken_image,
+                          color: scheme.onSurfaceVariant,
+                          size: 40,
                         ),
-                        child: const Icon(Icons.check,
-                            color: Colors.white, size: 14),
                       ),
                     ),
-                ],
+                    if (document.transactionId != null)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    document.wzNumber ?? 'Bez numeru',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(timeFmt.format(document.scannedAt),
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.grey)),
-                      if (document.amount != null)
-                        Text(moneyFmt.format(document.amount),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      document.wzNumber ?? 'Bez numeru',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          timeFmt.format(document.scannedAt),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (document.amount != null)
+                          Text(
+                            moneyFmt.format(document.amount),
                             style: const TextStyle(
-                                fontSize: 11, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ],
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/database/database.dart';
 import '../../core/theme.dart';
+import '../../core/transitions.dart';
 import '../../features/documents/document_viewer_screen.dart';
+import '../../features/transactions/add_transaction_screen.dart';
+import 'animated_amount.dart';
+import 'hover_lift.dart';
 
 class TransactionTile extends StatelessWidget {
   final Transaction transaction;
@@ -22,116 +26,163 @@ class TransactionTile extends StatelessWidget {
     final formatter = NumberFormat.currency(locale: 'pl_PL', symbol: 'zł');
     final dateFormatter = DateFormat('dd.MM.yyyy', 'pl_PL');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor:
-              (isIncome ? AppTheme.incomeColor : AppTheme.expenseColor)
-                  .withOpacity(0.15),
-          radius: 24,
-          child: Icon(
-            isIncome ? Icons.arrow_upward : Icons.arrow_downward,
-            color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
-            size: 22,
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return HoverLift(
+      liftPx: 2,
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 12,
           ),
-        ),
-        title: Text(transaction.title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(transaction.category,
-                style: const TextStyle(fontSize: 13, color: Colors.grey)),
-            if (transaction.wzNumber != null)
-              Text('WZ: ${transaction.wzNumber}',
-                  style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
-            if (!transaction.isPaid)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.schedule, size: 13, color: Colors.orange.shade800),
-                    const SizedBox(width: 4),
-                    Text(
-                      isIncome ? 'Należność' : 'Zobowiązanie',
-                      style: TextStyle(
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: (isIncome ? AppTheme.incomeColor : AppTheme.expenseColor)
+                  .withOpacity(0.14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              isIncome ? Icons.arrow_upward : Icons.arrow_downward,
+              color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
+              size: 22,
+            ),
+          ),
+          title: Text(
+            transaction.title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                transaction.category,
+                style: TextStyle(fontSize: 13, color: muted),
+              ),
+              if (transaction.wzNumber != null)
+                Text(
+                  'WZ: ${transaction.wzNumber}',
+                  style: TextStyle(fontSize: 12, color: muted),
+                ),
+              if (!transaction.isPaid)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.schedule,
+                        size: 13,
+                        color: AppTheme.pendingColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        transaction.paidAmount > 0
+                            ? '${isIncome ? "Należność" : "Zobowiązanie"} • spłacono ${formatter.format(transaction.paidAmount)}'
+                            : (isIncome ? 'Należność' : 'Zobowiązanie'),
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange.shade800),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (db != null)
-              FutureBuilder<ScannedDocument?>(
-                future: db!.documentsDao
-                    .getDocumentByTransactionId(transaction.id),
-                builder: (context, snapshot) {
-                  final document = snapshot.data;
-                  if (document == null) return const SizedBox.shrink();
-                  return IconButton(
-                    icon: const Icon(Icons.image_outlined),
-                    tooltip: 'Zobacz zeskanowany dokument',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DocumentViewerScreen(
-                          document: document,
-                          onDelete: () =>
-                              db!.documentsDao.deleteDocument(document.id),
+                          color: AppTheme.pendingColor,
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${isIncome ? '+' : '-'}${formatter.format(transaction.amount)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
+                    ],
                   ),
                 ),
-                Text(dateFormatter.format(transaction.date),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-          ],
-        ),
-        onLongPress: onDelete != null
-            ? () => showDialog(
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (db != null)
+                FutureBuilder<ScannedDocument?>(
+                  future: db!.documentsDao.getDocumentByTransactionId(
+                    transaction.id,
+                  ),
+                  builder: (context, snapshot) {
+                    final document = snapshot.data;
+                    if (document == null) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.image_outlined),
+                      tooltip: 'Zobacz zeskanowany dokument',
+                      onPressed: () => Navigator.push(
+                        context,
+                        premiumRoute(
+                          DocumentViewerScreen(
+                            document: document,
+                            onDelete: () =>
+                                db!.documentsDao.deleteDocument(document.id),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AnimatedAmount(
+                    amount: transaction.amount,
+                    format: (v) =>
+                        '${isIncome ? '+' : '-'}${formatter.format(v)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isIncome
+                          ? AppTheme.incomeColor
+                          : AppTheme.expenseColor,
+                    ),
+                  ),
+                  Text(
+                    dateFormatter.format(transaction.date),
+                    style: TextStyle(fontSize: 12, color: muted),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onTap: db == null
+              ? null
+              : () => Navigator.push(
+                  context,
+                  premiumRoute(
+                    AddTransactionScreen(
+                      db: db!,
+                      initialType: transaction.type,
+                      existing: transaction,
+                    ),
+                  ),
+                ),
+          onLongPress: onDelete != null
+              ? () => showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
                     title: const Text('Usuń transakcję?'),
                     content: Text('Czy usunąć "${transaction.title}"?'),
                     actions: [
                       TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Anuluj')),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Anuluj'),
+                      ),
                       TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            onDelete!();
-                          },
-                          child: const Text('Usuń',
-                              style: TextStyle(color: Colors.red))),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onDelete!();
+                        },
+                        child: const Text(
+                          'Usuń',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
                     ],
                   ),
                 )
-            : null,
+              : null,
+        ),
       ),
     );
   }

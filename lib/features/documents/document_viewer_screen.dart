@@ -33,19 +33,24 @@ class DocumentViewerScreen extends StatelessWidget {
                 builder: (_) => AlertDialog(
                   title: const Text('Usunąć dokument?'),
                   content: const Text(
-                      'Zdjęcie zostanie usunięte z archiwum. Powiązana transakcja (jeśli istnieje) nie zostanie usunięta.'),
+                    'Zdjęcie zostanie usunięte z archiwum. Powiązana transakcja (jeśli istnieje) nie zostanie usunięta.',
+                  ),
                   actions: [
                     TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Anuluj')),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Anuluj'),
+                    ),
                     TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                          onDelete!();
-                        },
-                        child: const Text('Usuń',
-                            style: TextStyle(color: Colors.red))),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                        onDelete!();
+                      },
+                      child: const Text(
+                        'Usuń',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -58,9 +63,7 @@ class DocumentViewerScreen extends StatelessWidget {
             child: InteractiveViewer(
               minScale: 0.5,
               maxScale: 4,
-              child: Center(
-                child: Image.file(File(document.imagePath)),
-              ),
+              child: Center(child: Image.file(File(document.imagePath))),
             ),
           ),
           Container(
@@ -69,19 +72,24 @@ class DocumentViewerScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _InfoRow(label: 'Zeskanowano', value: dateFmt.format(document.scannedAt)),
+                _InfoRow(
+                  label: 'Zeskanowano',
+                  value: dateFmt.format(document.scannedAt),
+                ),
                 _InfoRow(label: 'Numer WZ', value: document.wzNumber ?? '—'),
                 _InfoRow(label: 'Dostawca', value: document.supplier ?? '—'),
                 _InfoRow(
-                    label: 'Kwota',
-                    value: document.amount != null
-                        ? moneyFmt.format(document.amount)
-                        : '—'),
+                  label: 'Kwota',
+                  value: document.amount != null
+                      ? moneyFmt.format(document.amount)
+                      : '—',
+                ),
                 _InfoRow(
-                    label: 'Transakcja',
-                    value: document.transactionId != null
-                        ? 'Powiązana ✓'
-                        : 'Brak'),
+                  label: 'Transakcja',
+                  value: document.transactionId != null
+                      ? 'Powiązana ✓'
+                      : 'Brak',
+                ),
               ],
             ),
           ),
@@ -104,12 +112,16 @@ class _InfoRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(color: Colors.white, fontSize: 14)),
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
           ),
         ],
       ),

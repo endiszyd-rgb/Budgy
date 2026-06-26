@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../../core/database/database.dart';
+import '../../shared/widgets/responsive_page.dart';
+import '../../shared/widgets/staggered_fade_in.dart';
 
 const _categoryColors = <int>[
   0xFFE53935,
@@ -48,7 +50,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 decoration: const InputDecoration(labelText: 'Nazwa kategorii'),
               ),
               const SizedBox(height: 16),
-              const Text('Kolor', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              Text(
+                'Kolor',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -107,12 +115,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> _confirmDelete(Category category) async {
-    final siblings =
-        await widget.db.transactionsDao.getCategoriesByType(category.type);
+    final siblings = await widget.db.transactionsDao.getCategoriesByType(
+      category.type,
+    );
     if (!mounted) return;
     if (siblings.length <= 1) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Musi zostać przynajmniej jedna kategoria tego typu')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Musi zostać przynajmniej jedna kategoria tego typu'),
+        ),
+      );
       return;
     }
 
@@ -121,14 +133,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       builder: (_) => AlertDialog(
         title: const Text('Usunąć kategorię?'),
         content: Text(
-            'Kategoria "${category.name}" zostanie usunięta. Istniejące transakcje zachowają tę nazwę w historii.'),
+          'Kategoria "${category.name}" zostanie usunięta. Istniejące transakcje zachowają tę nazwę w historii.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Anuluj')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Anuluj'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Usuń', style: TextStyle(color: Colors.red))),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Usuń', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -141,74 +156,100 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Kategorie')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SegmentedButton<TransactionType>(
-              segments: const [
-                ButtonSegment(
+      body: ResponsivePage(
+        maxWidth: 800,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: SegmentedButton<TransactionType>(
+                segments: const [
+                  ButtonSegment(
                     value: TransactionType.expense,
                     label: Text('Wydatki'),
-                    icon: Icon(Icons.arrow_downward, size: 16)),
-                ButtonSegment(
+                    icon: Icon(Icons.arrow_downward, size: 16),
+                  ),
+                  ButtonSegment(
                     value: TransactionType.income,
                     label: Text('Przychody'),
-                    icon: Icon(Icons.arrow_upward, size: 16)),
-              ],
-              selected: {_selectedType},
-              onSelectionChanged: (s) =>
-                  setState(() => _selectedType = s.first),
+                    icon: Icon(Icons.arrow_upward, size: 16),
+                  ),
+                ],
+                selected: {_selectedType},
+                onSelectionChanged: (s) =>
+                    setState(() => _selectedType = s.first),
+              ),
             ),
-          ),
-          Expanded(
-            child: StreamBuilder<List<Category>>(
-              stream: widget.db.transactionsDao.watchAllCategories(),
-              builder: (context, snapshot) {
-                final categories = (snapshot.data ?? [])
-                    .where((c) => c.type == _selectedType)
-                    .toList();
-                if (categories.isEmpty) {
-                  return const Center(
-                    child: Text('Brak kategorii. Dodaj pierwszą przyciskiem +',
-                        style: TextStyle(color: Colors.grey)),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: categories.length,
-                  itemBuilder: (context, i) {
-                    final category = categories[i];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Color(category.colorValue),
-                        radius: 14,
-                      ),
-                      title: Text(category.name,
-                          style: const TextStyle(fontSize: 16)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            tooltip: 'Zmień nazwę',
-                            onPressed: () =>
-                                _showEditDialog(existing: category),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline,
-                                color: Colors.red),
-                            tooltip: 'Usuń',
-                            onPressed: () => _confirmDelete(category),
-                          ),
-                        ],
+            Expanded(
+              child: StreamBuilder<List<Category>>(
+                stream: widget.db.transactionsDao.watchAllCategories(),
+                builder: (context, snapshot) {
+                  final categories = (snapshot.data ?? [])
+                      .where((c) => c.type == _selectedType)
+                      .toList();
+                  if (categories.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Brak kategorii. Dodaj pierwszą przyciskiem +',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     );
-                  },
-                );
-              },
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: categories.length,
+                    itemBuilder: (context, i) {
+                      final category = categories[i];
+                      return StaggeredFadeIn(
+                        index: i,
+                        child: Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 4,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: Color(category.colorValue),
+                              radius: 16,
+                            ),
+                            title: Text(
+                              category.name,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Zmień nazwę',
+                                  onPressed: () =>
+                                      _showEditDialog(existing: category),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                  ),
+                                  tooltip: 'Usuń',
+                                  onPressed: () => _confirmDelete(category),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showEditDialog(),

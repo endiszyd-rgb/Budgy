@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,6 +12,7 @@ import '../database/database.dart';
 const _backupFileName = 'budgy_backup.zip';
 const _backupFolderName = 'Budgy Backups';
 const _prefsLastBackupKey = 'last_backup_at';
+const _driveScopes = <String>[drive.DriveApi.driveFileScope];
 
 class GoogleAuthClient extends http.BaseClient {
   final Map<String, String> _headers;
@@ -25,22 +27,62 @@ class GoogleAuthClient extends http.BaseClient {
   }
 }
 
+/// google_sign_in 7.x splits identity (this class) from per-scope
+/// authorization (see [_getDriveApi]) and requires an explicit
+/// [GoogleSignIn.initialize] call before any other method.
 class DriveBackupService {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [drive.DriveApi.driveFileScope],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final _userController = StreamController<GoogleSignInAccount?>.broadcast();
+  Future<void>? _initFuture;
+  GoogleSignInAccount? _currentUser;
 
-  GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
+  Future<void> _ensureInitialized() {
+    return _initFuture ??= _initialize();
+  }
 
-  Stream<GoogleSignInAccount?> get onUserChanged =>
-      _googleSignIn.onCurrentUserChanged;
+  Future<void> _initialize() async {
+    await _googleSignIn.initialize();
+    _googleSignIn.authenticationEvents.listen((event) {
+      _currentUser = switch (event) {
+        GoogleSignInAuthenticationEventSignIn() => event.user,
+        GoogleSignInAuthenticationEventSignOut() => null,
+      };
+      _userController.add(_currentUser);
+    });
+  }
 
-  Future<GoogleSignInAccount?> signInSilently() =>
-      _googleSignIn.signInSilently();
+  GoogleSignInAccount? get currentUser => _currentUser;
 
-  Future<GoogleSignInAccount?> signIn() => _googleSignIn.signIn();
+  Stream<GoogleSignInAccount?> get onUserChanged => _userController.stream;
 
-  Future<void> signOut() => _googleSignIn.signOut();
+  Future<GoogleSignInAccount?> signInSilently() async {
+    await _ensureInitialized();
+    try {
+      final account = await _googleSignIn.attemptLightweightAuthentication();
+      if (account != null) _currentUser = account;
+      return account;
+    } on GoogleSignInException {
+      return null;
+    }
+  }
+
+  Future<GoogleSignInAccount?> signIn() async {
+    await _ensureInitialized();
+    try {
+      final account = await _googleSignIn.authenticate();
+      _currentUser = account;
+      return account;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    await _ensureInitialized();
+    await _googleSignIn.disconnect();
+    _currentUser = null;
+  }
 
   Future<DateTime?> getLastBackupTime() async {
     final prefs = await SharedPreferences.getInstance();
@@ -54,11 +96,23 @@ class DriveBackupService {
   }
 
   Future<drive.DriveApi> _getDriveApi() async {
+    await _ensureInitialized();
     final account = currentUser ?? await signInSilently() ?? await signIn();
     if (account == null) {
       throw Exception('Logowanie do Google nie powiodło się');
     }
-    final authHeaders = await account.authHeaders;
+    var authHeaders = await account.authorizationClient.authorizationHeaders(
+      _driveScopes,
+    );
+    if (authHeaders == null) {
+      await account.authorizationClient.authorizeScopes(_driveScopes);
+      authHeaders = await account.authorizationClient.authorizationHeaders(
+        _driveScopes,
+      );
+    }
+    if (authHeaders == null) {
+      throw Exception('Brak autoryzacji dostępu do Google Drive');
+    }
     final client = GoogleAuthClient(authHeaders);
     return drive.DriveApi(client);
   }
@@ -109,7 +163,9 @@ class DriveBackupService {
   }
 
   Future<drive.File?> _findExistingBackup(
-      drive.DriveApi api, String folderId) async {
+    drive.DriveApi api,
+    String folderId,
+  ) async {
     final result = await api.files.list(
       q: "name = '$_backupFileName' and '$folderId' in parents and trashed = false",
       spaces: 'drive',
@@ -151,10 +207,12 @@ class DriveBackupService {
     final existing = await _findExistingBackup(api, folderId);
     if (existing == null) return false;
 
-    final media = await api.files.get(
-      existing.id!,
-      downloadOptions: drive.DownloadOptions.fullMedia,
-    ) as drive.Media;
+    final media =
+        await api.files.get(
+              existing.id!,
+              downloadOptions: drive.DownloadOptions.fullMedia,
+            )
+            as drive.Media;
 
     final tempDir = await getTemporaryDirectory();
     final zipPath = p.join(tempDir.path, 'restore_$_backupFileName');

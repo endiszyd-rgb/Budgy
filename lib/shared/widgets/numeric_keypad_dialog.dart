@@ -10,8 +10,10 @@ Future<double?> showNumericKeypad(
 }) {
   return showDialog<double>(
     context: context,
-    builder: (_) =>
-        _NumericKeypadDialog(initialValue: initialValue, accentColor: accentColor),
+    builder: (_) => _NumericKeypadDialog(
+      initialValue: initialValue,
+      accentColor: accentColor,
+    ),
   );
 }
 
@@ -58,21 +60,23 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
+        constraints: const BoxConstraints(maxWidth: 440),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Wprowadź kwotę',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(color: Colors.grey)),
-              const SizedBox(height: 8),
+              Text(
+                'Wprowadź kwotę',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -91,28 +95,22 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildRow(['1', '2', '3']),
+              _buildRow(context, ['1', '2', '3']),
               const SizedBox(height: 10),
-              _buildRow(['4', '5', '6']),
+              _buildRow(context, ['4', '5', '6']),
               const SizedBox(height: 10),
-              _buildRow(['7', '8', '9']),
+              _buildRow(context, ['7', '8', '9']),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _keyButton(
-                    label: 'C',
-                    onTap: _clear,
-                    background: Colors.grey.shade200,
-                    foreground: Colors.black87,
-                  ),
+                  _keyButton(context, label: 'C', onTap: _clear),
                   const SizedBox(width: 10),
-                  _keyButton(label: '0', onTap: () => _tapDigit('0')),
+                  _keyButton(context, label: '0', onTap: () => _tapDigit('0')),
                   const SizedBox(width: 10),
                   _keyButton(
+                    context,
                     icon: Icons.backspace_outlined,
                     onTap: _backspace,
-                    background: Colors.grey.shade200,
-                    foreground: Colors.black87,
                   ),
                 ],
               ),
@@ -123,8 +121,12 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: const Text('Anuluj', style: TextStyle(fontSize: 16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'Anuluj',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -138,9 +140,13 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
                         backgroundColor: widget.accentColor,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Gotowe',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Gotowe',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -152,26 +158,31 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
     );
   }
 
-  Widget _buildRow(List<String> digits) {
+  Widget _buildRow(BuildContext context, List<String> digits) {
     return Row(
-      children: digits
-          .map((d) => _keyButton(label: d, onTap: () => _tapDigit(d)))
-          .expand((w) => [w, const SizedBox(width: 10)])
-          .toList()
-        ..removeLast(),
+      children:
+          digits
+              .map(
+                (d) => _keyButton(context, label: d, onTap: () => _tapDigit(d)),
+              )
+              .expand((w) => [w, const SizedBox(width: 10)])
+              .toList()
+            ..removeLast(),
     );
   }
 
-  Widget _keyButton({
+  Widget _keyButton(
+    BuildContext context, {
     String? label,
     IconData? icon,
     required VoidCallback onTap,
     Color? background,
     Color? foreground,
   }) {
+    final scheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Material(
-        color: background ?? Colors.grey.shade100,
+        color: background ?? scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -180,13 +191,13 @@ class _NumericKeypadDialogState extends State<_NumericKeypadDialog> {
             height: 64,
             child: Center(
               child: icon != null
-                  ? Icon(icon, size: 26, color: foreground ?? Colors.black87)
+                  ? Icon(icon, size: 26, color: foreground ?? scheme.onSurface)
                   : Text(
                       label!,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w600,
-                        color: foreground ?? Colors.black87,
+                        color: foreground ?? scheme.onSurface,
                       ),
                     ),
             ),

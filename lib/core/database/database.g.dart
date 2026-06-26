@@ -97,6 +97,18 @@ class $TransactionsTable extends Transactions
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _paidAmountMeta = const VerificationMeta(
+    'paidAmount',
+  );
+  @override
+  late final GeneratedColumn<double> paidAmount = GeneratedColumn<double>(
+    'paid_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
@@ -128,6 +140,7 @@ class $TransactionsTable extends Transactions
     notes,
     wzNumber,
     isPaid,
+    paidAmount,
     date,
     createdAt,
   ];
@@ -188,6 +201,12 @@ class $TransactionsTable extends Transactions
         isPaid.isAcceptableOrUnknown(data['is_paid']!, _isPaidMeta),
       );
     }
+    if (data.containsKey('paid_amount')) {
+      context.handle(
+        _paidAmountMeta,
+        paidAmount.isAcceptableOrUnknown(data['paid_amount']!, _paidAmountMeta),
+      );
+    }
     if (data.containsKey('date')) {
       context.handle(
         _dateMeta,
@@ -245,6 +264,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.bool,
         data['${effectivePrefix}is_paid'],
       )!,
+      paidAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}paid_amount'],
+      )!,
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
@@ -274,6 +297,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String? notes;
   final String? wzNumber;
   final bool isPaid;
+  final double paidAmount;
   final DateTime date;
   final DateTime createdAt;
   const Transaction({
@@ -285,6 +309,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.notes,
     this.wzNumber,
     required this.isPaid,
+    required this.paidAmount,
     required this.date,
     required this.createdAt,
   });
@@ -307,6 +332,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       map['wz_number'] = Variable<String>(wzNumber);
     }
     map['is_paid'] = Variable<bool>(isPaid);
+    map['paid_amount'] = Variable<double>(paidAmount);
     map['date'] = Variable<DateTime>(date);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -326,6 +352,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? const Value.absent()
           : Value(wzNumber),
       isPaid: Value(isPaid),
+      paidAmount: Value(paidAmount),
       date: Value(date),
       createdAt: Value(createdAt),
     );
@@ -347,6 +374,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       notes: serializer.fromJson<String?>(json['notes']),
       wzNumber: serializer.fromJson<String?>(json['wzNumber']),
       isPaid: serializer.fromJson<bool>(json['isPaid']),
+      paidAmount: serializer.fromJson<double>(json['paidAmount']),
       date: serializer.fromJson<DateTime>(json['date']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -365,6 +393,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'notes': serializer.toJson<String?>(notes),
       'wzNumber': serializer.toJson<String?>(wzNumber),
       'isPaid': serializer.toJson<bool>(isPaid),
+      'paidAmount': serializer.toJson<double>(paidAmount),
       'date': serializer.toJson<DateTime>(date),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -379,6 +408,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<String?> notes = const Value.absent(),
     Value<String?> wzNumber = const Value.absent(),
     bool? isPaid,
+    double? paidAmount,
     DateTime? date,
     DateTime? createdAt,
   }) => Transaction(
@@ -390,6 +420,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     notes: notes.present ? notes.value : this.notes,
     wzNumber: wzNumber.present ? wzNumber.value : this.wzNumber,
     isPaid: isPaid ?? this.isPaid,
+    paidAmount: paidAmount ?? this.paidAmount,
     date: date ?? this.date,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -403,6 +434,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       notes: data.notes.present ? data.notes.value : this.notes,
       wzNumber: data.wzNumber.present ? data.wzNumber.value : this.wzNumber,
       isPaid: data.isPaid.present ? data.isPaid.value : this.isPaid,
+      paidAmount: data.paidAmount.present
+          ? data.paidAmount.value
+          : this.paidAmount,
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -419,6 +453,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('notes: $notes, ')
           ..write('wzNumber: $wzNumber, ')
           ..write('isPaid: $isPaid, ')
+          ..write('paidAmount: $paidAmount, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -435,6 +470,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     notes,
     wzNumber,
     isPaid,
+    paidAmount,
     date,
     createdAt,
   );
@@ -450,6 +486,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.notes == this.notes &&
           other.wzNumber == this.wzNumber &&
           other.isPaid == this.isPaid &&
+          other.paidAmount == this.paidAmount &&
           other.date == this.date &&
           other.createdAt == this.createdAt);
 }
@@ -463,6 +500,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> notes;
   final Value<String?> wzNumber;
   final Value<bool> isPaid;
+  final Value<double> paidAmount;
   final Value<DateTime> date;
   final Value<DateTime> createdAt;
   const TransactionsCompanion({
@@ -474,6 +512,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.notes = const Value.absent(),
     this.wzNumber = const Value.absent(),
     this.isPaid = const Value.absent(),
+    this.paidAmount = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -486,6 +525,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.notes = const Value.absent(),
     this.wzNumber = const Value.absent(),
     this.isPaid = const Value.absent(),
+    this.paidAmount = const Value.absent(),
     required DateTime date,
     this.createdAt = const Value.absent(),
   }) : title = Value(title),
@@ -502,6 +542,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? notes,
     Expression<String>? wzNumber,
     Expression<bool>? isPaid,
+    Expression<double>? paidAmount,
     Expression<DateTime>? date,
     Expression<DateTime>? createdAt,
   }) {
@@ -514,6 +555,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (notes != null) 'notes': notes,
       if (wzNumber != null) 'wz_number': wzNumber,
       if (isPaid != null) 'is_paid': isPaid,
+      if (paidAmount != null) 'paid_amount': paidAmount,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -528,6 +570,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String?>? notes,
     Value<String?>? wzNumber,
     Value<bool>? isPaid,
+    Value<double>? paidAmount,
     Value<DateTime>? date,
     Value<DateTime>? createdAt,
   }) {
@@ -540,6 +583,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       notes: notes ?? this.notes,
       wzNumber: wzNumber ?? this.wzNumber,
       isPaid: isPaid ?? this.isPaid,
+      paidAmount: paidAmount ?? this.paidAmount,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -574,6 +618,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (isPaid.present) {
       map['is_paid'] = Variable<bool>(isPaid.value);
     }
+    if (paidAmount.present) {
+      map['paid_amount'] = Variable<double>(paidAmount.value);
+    }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
@@ -594,6 +641,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('notes: $notes, ')
           ..write('wzNumber: $wzNumber, ')
           ..write('isPaid: $isPaid, ')
+          ..write('paidAmount: $paidAmount, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1460,6 +1508,562 @@ class ScannedDocumentsCompanion extends UpdateCompanion<ScannedDocument> {
   }
 }
 
+class $AppointmentsTable extends Appointments
+    with TableInfo<$AppointmentsTable, Appointment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppointmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 200,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _clientNameMeta = const VerificationMeta(
+    'clientName',
+  );
+  @override
+  late final GeneratedColumn<String> clientName = GeneratedColumn<String>(
+    'client_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _vehicleMeta = const VerificationMeta(
+    'vehicle',
+  );
+  @override
+  late final GeneratedColumn<String> vehicle = GeneratedColumn<String>(
+    'vehicle',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scheduledAtMeta = const VerificationMeta(
+    'scheduledAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> scheduledAt = GeneratedColumn<DateTime>(
+    'scheduled_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isDoneMeta = const VerificationMeta('isDone');
+  @override
+  late final GeneratedColumn<bool> isDone = GeneratedColumn<bool>(
+    'is_done',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_done" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    clientName,
+    phone,
+    vehicle,
+    notes,
+    scheduledAt,
+    isDone,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'appointments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Appointment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('client_name')) {
+      context.handle(
+        _clientNameMeta,
+        clientName.isAcceptableOrUnknown(data['client_name']!, _clientNameMeta),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('vehicle')) {
+      context.handle(
+        _vehicleMeta,
+        vehicle.isAcceptableOrUnknown(data['vehicle']!, _vehicleMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('scheduled_at')) {
+      context.handle(
+        _scheduledAtMeta,
+        scheduledAt.isAcceptableOrUnknown(
+          data['scheduled_at']!,
+          _scheduledAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_scheduledAtMeta);
+    }
+    if (data.containsKey('is_done')) {
+      context.handle(
+        _isDoneMeta,
+        isDone.isAcceptableOrUnknown(data['is_done']!, _isDoneMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Appointment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Appointment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      clientName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_name'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      vehicle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      scheduledAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}scheduled_at'],
+      )!,
+      isDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_done'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AppointmentsTable createAlias(String alias) {
+    return $AppointmentsTable(attachedDatabase, alias);
+  }
+}
+
+class Appointment extends DataClass implements Insertable<Appointment> {
+  final int id;
+  final String title;
+  final String? clientName;
+  final String? phone;
+  final String? vehicle;
+  final String? notes;
+  final DateTime scheduledAt;
+  final bool isDone;
+  final DateTime createdAt;
+  const Appointment({
+    required this.id,
+    required this.title,
+    this.clientName,
+    this.phone,
+    this.vehicle,
+    this.notes,
+    required this.scheduledAt,
+    required this.isDone,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || clientName != null) {
+      map['client_name'] = Variable<String>(clientName);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || vehicle != null) {
+      map['vehicle'] = Variable<String>(vehicle);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['scheduled_at'] = Variable<DateTime>(scheduledAt);
+    map['is_done'] = Variable<bool>(isDone);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AppointmentsCompanion toCompanion(bool nullToAbsent) {
+    return AppointmentsCompanion(
+      id: Value(id),
+      title: Value(title),
+      clientName: clientName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clientName),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      vehicle: vehicle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(vehicle),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      scheduledAt: Value(scheduledAt),
+      isDone: Value(isDone),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Appointment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Appointment(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      clientName: serializer.fromJson<String?>(json['clientName']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      vehicle: serializer.fromJson<String?>(json['vehicle']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      scheduledAt: serializer.fromJson<DateTime>(json['scheduledAt']),
+      isDone: serializer.fromJson<bool>(json['isDone']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'clientName': serializer.toJson<String?>(clientName),
+      'phone': serializer.toJson<String?>(phone),
+      'vehicle': serializer.toJson<String?>(vehicle),
+      'notes': serializer.toJson<String?>(notes),
+      'scheduledAt': serializer.toJson<DateTime>(scheduledAt),
+      'isDone': serializer.toJson<bool>(isDone),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Appointment copyWith({
+    int? id,
+    String? title,
+    Value<String?> clientName = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    Value<String?> vehicle = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    DateTime? scheduledAt,
+    bool? isDone,
+    DateTime? createdAt,
+  }) => Appointment(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    clientName: clientName.present ? clientName.value : this.clientName,
+    phone: phone.present ? phone.value : this.phone,
+    vehicle: vehicle.present ? vehicle.value : this.vehicle,
+    notes: notes.present ? notes.value : this.notes,
+    scheduledAt: scheduledAt ?? this.scheduledAt,
+    isDone: isDone ?? this.isDone,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Appointment copyWithCompanion(AppointmentsCompanion data) {
+    return Appointment(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      clientName: data.clientName.present
+          ? data.clientName.value
+          : this.clientName,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      vehicle: data.vehicle.present ? data.vehicle.value : this.vehicle,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      scheduledAt: data.scheduledAt.present
+          ? data.scheduledAt.value
+          : this.scheduledAt,
+      isDone: data.isDone.present ? data.isDone.value : this.isDone,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Appointment(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('clientName: $clientName, ')
+          ..write('phone: $phone, ')
+          ..write('vehicle: $vehicle, ')
+          ..write('notes: $notes, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('isDone: $isDone, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    clientName,
+    phone,
+    vehicle,
+    notes,
+    scheduledAt,
+    isDone,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Appointment &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.clientName == this.clientName &&
+          other.phone == this.phone &&
+          other.vehicle == this.vehicle &&
+          other.notes == this.notes &&
+          other.scheduledAt == this.scheduledAt &&
+          other.isDone == this.isDone &&
+          other.createdAt == this.createdAt);
+}
+
+class AppointmentsCompanion extends UpdateCompanion<Appointment> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<String?> clientName;
+  final Value<String?> phone;
+  final Value<String?> vehicle;
+  final Value<String?> notes;
+  final Value<DateTime> scheduledAt;
+  final Value<bool> isDone;
+  final Value<DateTime> createdAt;
+  const AppointmentsCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.clientName = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.vehicle = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.scheduledAt = const Value.absent(),
+    this.isDone = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  AppointmentsCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    this.clientName = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.vehicle = const Value.absent(),
+    this.notes = const Value.absent(),
+    required DateTime scheduledAt,
+    this.isDone = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : title = Value(title),
+       scheduledAt = Value(scheduledAt);
+  static Insertable<Appointment> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<String>? clientName,
+    Expression<String>? phone,
+    Expression<String>? vehicle,
+    Expression<String>? notes,
+    Expression<DateTime>? scheduledAt,
+    Expression<bool>? isDone,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (clientName != null) 'client_name': clientName,
+      if (phone != null) 'phone': phone,
+      if (vehicle != null) 'vehicle': vehicle,
+      if (notes != null) 'notes': notes,
+      if (scheduledAt != null) 'scheduled_at': scheduledAt,
+      if (isDone != null) 'is_done': isDone,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  AppointmentsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<String?>? clientName,
+    Value<String?>? phone,
+    Value<String?>? vehicle,
+    Value<String?>? notes,
+    Value<DateTime>? scheduledAt,
+    Value<bool>? isDone,
+    Value<DateTime>? createdAt,
+  }) {
+    return AppointmentsCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      clientName: clientName ?? this.clientName,
+      phone: phone ?? this.phone,
+      vehicle: vehicle ?? this.vehicle,
+      notes: notes ?? this.notes,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      isDone: isDone ?? this.isDone,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (clientName.present) {
+      map['client_name'] = Variable<String>(clientName.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (vehicle.present) {
+      map['vehicle'] = Variable<String>(vehicle.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (scheduledAt.present) {
+      map['scheduled_at'] = Variable<DateTime>(scheduledAt.value);
+    }
+    if (isDone.present) {
+      map['is_done'] = Variable<bool>(isDone.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppointmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('clientName: $clientName, ')
+          ..write('phone: $phone, ')
+          ..write('vehicle: $vehicle, ')
+          ..write('notes: $notes, ')
+          ..write('scheduledAt: $scheduledAt, ')
+          ..write('isDone: $isDone, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1468,10 +2072,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ScannedDocumentsTable scannedDocuments = $ScannedDocumentsTable(
     this,
   );
+  late final $AppointmentsTable appointments = $AppointmentsTable(this);
   late final TransactionsDao transactionsDao = TransactionsDao(
     this as AppDatabase,
   );
   late final DocumentsDao documentsDao = DocumentsDao(this as AppDatabase);
+  late final AppointmentsDao appointmentsDao = AppointmentsDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1480,6 +2088,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     transactions,
     categories,
     scannedDocuments,
+    appointments,
   ];
 }
 
@@ -1493,6 +2102,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> notes,
       Value<String?> wzNumber,
       Value<bool> isPaid,
+      Value<double> paidAmount,
       required DateTime date,
       Value<DateTime> createdAt,
     });
@@ -1506,6 +2116,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> notes,
       Value<String?> wzNumber,
       Value<bool> isPaid,
+      Value<double> paidAmount,
       Value<DateTime> date,
       Value<DateTime> createdAt,
     });
@@ -1557,6 +2168,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<bool> get isPaid => $composableBuilder(
     column: $table.isPaid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get paidAmount => $composableBuilder(
+    column: $table.paidAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1620,6 +2236,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get paidAmount => $composableBuilder(
+    column: $table.paidAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnOrderings(column),
@@ -1663,6 +2284,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<bool> get isPaid =>
       $composableBuilder(column: $table.isPaid, builder: (column) => column);
+
+  GeneratedColumn<double> get paidAmount => $composableBuilder(
+    column: $table.paidAmount,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -1710,6 +2336,7 @@ class $$TransactionsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String?> wzNumber = const Value.absent(),
                 Value<bool> isPaid = const Value.absent(),
+                Value<double> paidAmount = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TransactionsCompanion(
@@ -1721,6 +2348,7 @@ class $$TransactionsTableTableManager
                 notes: notes,
                 wzNumber: wzNumber,
                 isPaid: isPaid,
+                paidAmount: paidAmount,
                 date: date,
                 createdAt: createdAt,
               ),
@@ -1734,6 +2362,7 @@ class $$TransactionsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String?> wzNumber = const Value.absent(),
                 Value<bool> isPaid = const Value.absent(),
+                Value<double> paidAmount = const Value.absent(),
                 required DateTime date,
                 Value<DateTime> createdAt = const Value.absent(),
               }) => TransactionsCompanion.insert(
@@ -1745,6 +2374,7 @@ class $$TransactionsTableTableManager
                 notes: notes,
                 wzNumber: wzNumber,
                 isPaid: isPaid,
+                paidAmount: paidAmount,
                 date: date,
                 createdAt: createdAt,
               ),
@@ -2223,6 +2853,280 @@ typedef $$ScannedDocumentsTableProcessedTableManager =
       ScannedDocument,
       PrefetchHooks Function()
     >;
+typedef $$AppointmentsTableCreateCompanionBuilder =
+    AppointmentsCompanion Function({
+      Value<int> id,
+      required String title,
+      Value<String?> clientName,
+      Value<String?> phone,
+      Value<String?> vehicle,
+      Value<String?> notes,
+      required DateTime scheduledAt,
+      Value<bool> isDone,
+      Value<DateTime> createdAt,
+    });
+typedef $$AppointmentsTableUpdateCompanionBuilder =
+    AppointmentsCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<String?> clientName,
+      Value<String?> phone,
+      Value<String?> vehicle,
+      Value<String?> notes,
+      Value<DateTime> scheduledAt,
+      Value<bool> isDone,
+      Value<DateTime> createdAt,
+    });
+
+class $$AppointmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppointmentsTable> {
+  $$AppointmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientName => $composableBuilder(
+    column: $table.clientName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicle => $composableBuilder(
+    column: $table.vehicle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDone => $composableBuilder(
+    column: $table.isDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppointmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppointmentsTable> {
+  $$AppointmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get clientName => $composableBuilder(
+    column: $table.clientName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicle => $composableBuilder(
+    column: $table.vehicle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDone => $composableBuilder(
+    column: $table.isDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppointmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppointmentsTable> {
+  $$AppointmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get clientName => $composableBuilder(
+    column: $table.clientName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicle =>
+      $composableBuilder(column: $table.vehicle, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get scheduledAt => $composableBuilder(
+    column: $table.scheduledAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isDone =>
+      $composableBuilder(column: $table.isDone, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$AppointmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppointmentsTable,
+          Appointment,
+          $$AppointmentsTableFilterComposer,
+          $$AppointmentsTableOrderingComposer,
+          $$AppointmentsTableAnnotationComposer,
+          $$AppointmentsTableCreateCompanionBuilder,
+          $$AppointmentsTableUpdateCompanionBuilder,
+          (
+            Appointment,
+            BaseReferences<_$AppDatabase, $AppointmentsTable, Appointment>,
+          ),
+          Appointment,
+          PrefetchHooks Function()
+        > {
+  $$AppointmentsTableTableManager(_$AppDatabase db, $AppointmentsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppointmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppointmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppointmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> clientName = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> vehicle = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> scheduledAt = const Value.absent(),
+                Value<bool> isDone = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AppointmentsCompanion(
+                id: id,
+                title: title,
+                clientName: clientName,
+                phone: phone,
+                vehicle: vehicle,
+                notes: notes,
+                scheduledAt: scheduledAt,
+                isDone: isDone,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                Value<String?> clientName = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> vehicle = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                required DateTime scheduledAt,
+                Value<bool> isDone = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AppointmentsCompanion.insert(
+                id: id,
+                title: title,
+                clientName: clientName,
+                phone: phone,
+                vehicle: vehicle,
+                notes: notes,
+                scheduledAt: scheduledAt,
+                isDone: isDone,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppointmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppointmentsTable,
+      Appointment,
+      $$AppointmentsTableFilterComposer,
+      $$AppointmentsTableOrderingComposer,
+      $$AppointmentsTableAnnotationComposer,
+      $$AppointmentsTableCreateCompanionBuilder,
+      $$AppointmentsTableUpdateCompanionBuilder,
+      (
+        Appointment,
+        BaseReferences<_$AppDatabase, $AppointmentsTable, Appointment>,
+      ),
+      Appointment,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2233,4 +3137,6 @@ class $AppDatabaseManager {
       $$CategoriesTableTableManager(_db, _db.categories);
   $$ScannedDocumentsTableTableManager get scannedDocuments =>
       $$ScannedDocumentsTableTableManager(_db, _db.scannedDocuments);
+  $$AppointmentsTableTableManager get appointments =>
+      $$AppointmentsTableTableManager(_db, _db.appointments);
 }

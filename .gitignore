@@ -37,3 +37,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local Claude Code plugin checkout (not project content)
+/.claude/vgv-ai-flutter-plugin-main/

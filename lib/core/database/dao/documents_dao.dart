@@ -8,24 +8,22 @@ class DocumentsDao extends DatabaseAccessor<AppDatabase>
     with _$DocumentsDaoMixin {
   DocumentsDao(super.db);
 
-  Stream<List<ScannedDocument>> watchAllDocuments() =>
-      (select(scannedDocuments)
-            ..orderBy([(d) => OrderingTerm.desc(d.scannedAt)]))
-          .watch();
+  Stream<List<ScannedDocument>> watchAllDocuments() => (select(
+    scannedDocuments,
+  )..orderBy([(d) => OrderingTerm.desc(d.scannedAt)])).watch();
 
   Future<int> insertDocument(ScannedDocumentsCompanion entry) =>
       into(scannedDocuments).insert(entry);
 
   Future<ScannedDocument?> getDocumentByTransactionId(int transactionId) =>
-      (select(scannedDocuments)
-            ..where((d) => d.transactionId.equals(transactionId)))
-          .getSingleOrNull();
+      (select(
+        scannedDocuments,
+      )..where((d) => d.transactionId.equals(transactionId))).getSingleOrNull();
 
   Future<void> linkTransaction(int documentId, int transactionId) =>
-      (update(scannedDocuments)..where((d) => d.id.equals(documentId)))
-          .write(ScannedDocumentsCompanion(
-        transactionId: Value(transactionId),
-      ));
+      (update(scannedDocuments)..where((d) => d.id.equals(documentId))).write(
+        ScannedDocumentsCompanion(transactionId: Value(transactionId)),
+      );
 
   Future<int> deleteDocument(int id) =>
       (delete(scannedDocuments)..where((d) => d.id.equals(id))).go();
