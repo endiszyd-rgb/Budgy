@@ -5,13 +5,37 @@ import '../../core/database/database.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets/responsive_page.dart';
 
+/// Czas trwania wizyty do wyboru w formularzu (w minutach).
+const List<int> _durationPresets = [15, 30, 45, 60, 90, 120, 180];
+
+/// Formatuje liczbę minut jako etykietę po polsku, np. `30 min`,
+/// `1 godz.`, `1 godz. 30 min`, `2 godz.`.
+String _formatDuration(int minutes) {
+  final hours = minutes ~/ 60;
+  final remainingMinutes = minutes % 60;
+  if (hours == 0) return '$remainingMinutes min';
+  final hoursLabel = '$hours godz.';
+  if (remainingMinutes == 0) return hoursLabel;
+  return '$hoursLabel $remainingMinutes min';
+}
+
 class AddAppointmentScreen extends StatefulWidget {
   final AppDatabase db;
 
   /// Gdy podana, ekran działa w trybie edycji tej wizyty (zamiast tworzenia nowej).
   final Appointment? existing;
 
-  const AddAppointmentScreen({super.key, required this.db, this.existing});
+  /// Gdy podana (i [existing] jest null), wstępnie ustawia datę/godzinę nowej
+  /// wizyty — używane np. po dwukrotnym kliknięciu wolnego miejsca w
+  /// kalendarzu tygodniowym.
+  final DateTime? initialScheduledAt;
+
+  const AddAppointmentScreen({
+    super.key,
+    required this.db,
+    this.existing,
+    this.initialScheduledAt,
+  });
 
   @override
   State<AddAppointmentScreen> createState() => _AddAppointmentScreenState();
@@ -26,6 +50,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   late TextEditingController _notesCtrl;
   late DateTime _date;
   late TimeOfDay _time;
+  late int _durationMinutes;
   bool _isDone = false;
   bool _saving = false;
 
@@ -38,9 +63,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     _phoneCtrl = TextEditingController(text: existing?.phone ?? '');
     _vehicleCtrl = TextEditingController(text: existing?.vehicle ?? '');
     _notesCtrl = TextEditingController(text: existing?.notes ?? '');
-    final scheduledAt = existing?.scheduledAt ?? DateTime.now();
+    final scheduledAt =
+        existing?.scheduledAt ?? widget.initialScheduledAt ?? DateTime.now();
     _date = DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day);
     _time = TimeOfDay(hour: scheduledAt.hour, minute: scheduledAt.minute);
+    _durationMinutes = existing?.durationMinutes ?? 60;
     _isDone = existing?.isDone ?? false;
   }
 
@@ -104,6 +131,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
           vehicle: vehicle,
           notes: notes,
           scheduledAt: scheduledAt,
+          durationMinutes: Value(_durationMinutes),
           isDone: Value(_isDone),
         ),
       );
@@ -116,6 +144,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
           vehicle: vehicle,
           notes: notes,
           scheduledAt: scheduledAt,
+          durationMinutes: _durationMinutes,
           isDone: _isDone,
         ),
       );
@@ -220,6 +249,24 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  initialValue: _durationMinutes,
+                  decoration: const InputDecoration(
+                    labelText: 'Czas trwania',
+                    prefixIcon: Icon(Icons.timelapse),
+                  ),
+                  items: _durationPresets
+                      .map(
+                        (minutes) => DropdownMenuItem<int>(
+                          value: minutes,
+                          child: Text(_formatDuration(minutes)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) =>
+                      setState(() => _durationMinutes = v ?? _durationMinutes),
                 ),
                 const SizedBox(height: 16),
                 Card(

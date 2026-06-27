@@ -51,6 +51,7 @@ class Appointments extends Table {
   TextColumn get vehicle => text().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get scheduledAt => dateTime()();
+  IntColumn get durationMinutes => integer().withDefault(const Constant(60))();
   BoolColumn get isDone => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -63,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -87,6 +88,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) {
         await m.createTable(appointments);
+      }
+      if (from < 6) {
+        await m.addColumn(appointments, appointments.durationMinutes);
       }
     },
   );

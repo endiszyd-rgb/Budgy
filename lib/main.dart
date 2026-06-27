@@ -14,7 +14,7 @@ import 'features/scanner/wz_scanner_screen.dart';
 import 'features/reports/reports_screen.dart';
 import 'features/documents/documents_screen.dart';
 import 'features/settings/settings_screen.dart';
-import 'features/schedule/schedule_screen.dart';
+import 'features/schedule/calendar/calendar_screen.dart';
 import 'features/schedule/add_appointment_screen.dart';
 
 void main() async {
@@ -100,7 +100,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     super.initState();
     _screens = [
       DashboardScreen(db: widget.db),
-      ScheduleScreen(db: widget.db),
+      CalendarScreen(db: widget.db),
       TransactionsScreen(db: widget.db),
       DocumentsScreen(db: widget.db),
       ReportsScreen(db: widget.db),

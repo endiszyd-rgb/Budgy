@@ -1080,6 +1080,9 @@ class $ScannedDocumentsTable extends ScannedDocuments
     true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES transactions (id)',
+    ),
   );
   static const VerificationMeta _scannedAtMeta = const VerificationMeta(
     'scannedAt',
@@ -1591,6 +1594,18 @@ class $AppointmentsTable extends Appointments
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
+    'durationMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> durationMinutes = GeneratedColumn<int>(
+    'duration_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(60),
+  );
   static const VerificationMeta _isDoneMeta = const VerificationMeta('isDone');
   @override
   late final GeneratedColumn<bool> isDone = GeneratedColumn<bool>(
@@ -1625,6 +1640,7 @@ class $AppointmentsTable extends Appointments
     vehicle,
     notes,
     scheduledAt,
+    durationMinutes,
     isDone,
     createdAt,
   ];
@@ -1686,6 +1702,15 @@ class $AppointmentsTable extends Appointments
     } else if (isInserting) {
       context.missing(_scheduledAtMeta);
     }
+    if (data.containsKey('duration_minutes')) {
+      context.handle(
+        _durationMinutesMeta,
+        durationMinutes.isAcceptableOrUnknown(
+          data['duration_minutes']!,
+          _durationMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_done')) {
       context.handle(
         _isDoneMeta,
@@ -1735,6 +1760,10 @@ class $AppointmentsTable extends Appointments
         DriftSqlType.dateTime,
         data['${effectivePrefix}scheduled_at'],
       )!,
+      durationMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_minutes'],
+      )!,
       isDone: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_done'],
@@ -1760,6 +1789,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
   final String? vehicle;
   final String? notes;
   final DateTime scheduledAt;
+  final int durationMinutes;
   final bool isDone;
   final DateTime createdAt;
   const Appointment({
@@ -1770,6 +1800,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
     this.vehicle,
     this.notes,
     required this.scheduledAt,
+    required this.durationMinutes,
     required this.isDone,
     required this.createdAt,
   });
@@ -1791,6 +1822,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
       map['notes'] = Variable<String>(notes);
     }
     map['scheduled_at'] = Variable<DateTime>(scheduledAt);
+    map['duration_minutes'] = Variable<int>(durationMinutes);
     map['is_done'] = Variable<bool>(isDone);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1813,6 +1845,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
           ? const Value.absent()
           : Value(notes),
       scheduledAt: Value(scheduledAt),
+      durationMinutes: Value(durationMinutes),
       isDone: Value(isDone),
       createdAt: Value(createdAt),
     );
@@ -1831,6 +1864,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
       vehicle: serializer.fromJson<String?>(json['vehicle']),
       notes: serializer.fromJson<String?>(json['notes']),
       scheduledAt: serializer.fromJson<DateTime>(json['scheduledAt']),
+      durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
       isDone: serializer.fromJson<bool>(json['isDone']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1846,6 +1880,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
       'vehicle': serializer.toJson<String?>(vehicle),
       'notes': serializer.toJson<String?>(notes),
       'scheduledAt': serializer.toJson<DateTime>(scheduledAt),
+      'durationMinutes': serializer.toJson<int>(durationMinutes),
       'isDone': serializer.toJson<bool>(isDone),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1859,6 +1894,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
     Value<String?> vehicle = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     DateTime? scheduledAt,
+    int? durationMinutes,
     bool? isDone,
     DateTime? createdAt,
   }) => Appointment(
@@ -1869,6 +1905,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
     vehicle: vehicle.present ? vehicle.value : this.vehicle,
     notes: notes.present ? notes.value : this.notes,
     scheduledAt: scheduledAt ?? this.scheduledAt,
+    durationMinutes: durationMinutes ?? this.durationMinutes,
     isDone: isDone ?? this.isDone,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1885,6 +1922,9 @@ class Appointment extends DataClass implements Insertable<Appointment> {
       scheduledAt: data.scheduledAt.present
           ? data.scheduledAt.value
           : this.scheduledAt,
+      durationMinutes: data.durationMinutes.present
+          ? data.durationMinutes.value
+          : this.durationMinutes,
       isDone: data.isDone.present ? data.isDone.value : this.isDone,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1900,6 +1940,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
           ..write('vehicle: $vehicle, ')
           ..write('notes: $notes, ')
           ..write('scheduledAt: $scheduledAt, ')
+          ..write('durationMinutes: $durationMinutes, ')
           ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1915,6 +1956,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
     vehicle,
     notes,
     scheduledAt,
+    durationMinutes,
     isDone,
     createdAt,
   );
@@ -1929,6 +1971,7 @@ class Appointment extends DataClass implements Insertable<Appointment> {
           other.vehicle == this.vehicle &&
           other.notes == this.notes &&
           other.scheduledAt == this.scheduledAt &&
+          other.durationMinutes == this.durationMinutes &&
           other.isDone == this.isDone &&
           other.createdAt == this.createdAt);
 }
@@ -1941,6 +1984,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
   final Value<String?> vehicle;
   final Value<String?> notes;
   final Value<DateTime> scheduledAt;
+  final Value<int> durationMinutes;
   final Value<bool> isDone;
   final Value<DateTime> createdAt;
   const AppointmentsCompanion({
@@ -1951,6 +1995,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
     this.vehicle = const Value.absent(),
     this.notes = const Value.absent(),
     this.scheduledAt = const Value.absent(),
+    this.durationMinutes = const Value.absent(),
     this.isDone = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -1962,6 +2007,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
     this.vehicle = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime scheduledAt,
+    this.durationMinutes = const Value.absent(),
     this.isDone = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : title = Value(title),
@@ -1974,6 +2020,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
     Expression<String>? vehicle,
     Expression<String>? notes,
     Expression<DateTime>? scheduledAt,
+    Expression<int>? durationMinutes,
     Expression<bool>? isDone,
     Expression<DateTime>? createdAt,
   }) {
@@ -1985,6 +2032,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
       if (vehicle != null) 'vehicle': vehicle,
       if (notes != null) 'notes': notes,
       if (scheduledAt != null) 'scheduled_at': scheduledAt,
+      if (durationMinutes != null) 'duration_minutes': durationMinutes,
       if (isDone != null) 'is_done': isDone,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -1998,6 +2046,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
     Value<String?>? vehicle,
     Value<String?>? notes,
     Value<DateTime>? scheduledAt,
+    Value<int>? durationMinutes,
     Value<bool>? isDone,
     Value<DateTime>? createdAt,
   }) {
@@ -2009,6 +2058,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
       vehicle: vehicle ?? this.vehicle,
       notes: notes ?? this.notes,
       scheduledAt: scheduledAt ?? this.scheduledAt,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
       isDone: isDone ?? this.isDone,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -2038,6 +2088,9 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
     if (scheduledAt.present) {
       map['scheduled_at'] = Variable<DateTime>(scheduledAt.value);
     }
+    if (durationMinutes.present) {
+      map['duration_minutes'] = Variable<int>(durationMinutes.value);
+    }
     if (isDone.present) {
       map['is_done'] = Variable<bool>(isDone.value);
     }
@@ -2057,6 +2110,7 @@ class AppointmentsCompanion extends UpdateCompanion<Appointment> {
           ..write('vehicle: $vehicle, ')
           ..write('notes: $notes, ')
           ..write('scheduledAt: $scheduledAt, ')
+          ..write('durationMinutes: $durationMinutes, ')
           ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -2120,6 +2174,31 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<DateTime> date,
       Value<DateTime> createdAt,
     });
+
+final class $$TransactionsTableReferences
+    extends BaseReferences<_$AppDatabase, $TransactionsTable, Transaction> {
+  $$TransactionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ScannedDocumentsTable, List<ScannedDocument>>
+  _scannedDocumentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.scannedDocuments,
+    aliasName: 'transactions__id__scanned_documents__transaction_id',
+  );
+
+  $$ScannedDocumentsTableProcessedTableManager get scannedDocumentsRefs {
+    final manager = $$ScannedDocumentsTableTableManager(
+      $_db,
+      $_db.scannedDocuments,
+    ).filter((f) => f.transactionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _scannedDocumentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$TransactionsTableFilterComposer
     extends Composer<_$AppDatabase, $TransactionsTable> {
@@ -2185,6 +2264,31 @@ class $$TransactionsTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> scannedDocumentsRefs(
+    Expression<bool> Function($$ScannedDocumentsTableFilterComposer f) f,
+  ) {
+    final $$ScannedDocumentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.scannedDocuments,
+      getReferencedColumn: (t) => t.transactionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ScannedDocumentsTableFilterComposer(
+            $db: $db,
+            $table: $db.scannedDocuments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableOrderingComposer
@@ -2295,6 +2399,31 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> scannedDocumentsRefs<T extends Object>(
+    Expression<T> Function($$ScannedDocumentsTableAnnotationComposer a) f,
+  ) {
+    final $$ScannedDocumentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.scannedDocuments,
+      getReferencedColumn: (t) => t.transactionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ScannedDocumentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.scannedDocuments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -2308,12 +2437,9 @@ class $$TransactionsTableTableManager
           $$TransactionsTableAnnotationComposer,
           $$TransactionsTableCreateCompanionBuilder,
           $$TransactionsTableUpdateCompanionBuilder,
-          (
-            Transaction,
-            BaseReferences<_$AppDatabase, $TransactionsTable, Transaction>,
-          ),
+          (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool scannedDocumentsRefs})
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -2379,9 +2505,47 @@ class $$TransactionsTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$TransactionsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({scannedDocumentsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (scannedDocumentsRefs) db.scannedDocuments,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (scannedDocumentsRefs)
+                    await $_getPrefetchedData<
+                      Transaction,
+                      $TransactionsTable,
+                      ScannedDocument
+                    >(
+                      currentTable: table,
+                      referencedTable: $$TransactionsTableReferences
+                          ._scannedDocumentsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$TransactionsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).scannedDocumentsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.transactionId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -2396,12 +2560,9 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableAnnotationComposer,
       $$TransactionsTableCreateCompanionBuilder,
       $$TransactionsTableUpdateCompanionBuilder,
-      (
-        Transaction,
-        BaseReferences<_$AppDatabase, $TransactionsTable, Transaction>,
-      ),
+      (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool scannedDocumentsRefs})
     >;
 typedef $$CategoriesTableCreateCompanionBuilder =
     CategoriesCompanion Function({
@@ -2617,6 +2778,34 @@ typedef $$ScannedDocumentsTableUpdateCompanionBuilder =
       Value<DateTime> scannedAt,
     });
 
+final class $$ScannedDocumentsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $ScannedDocumentsTable, ScannedDocument> {
+  $$ScannedDocumentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $TransactionsTable _transactionIdTable(_$AppDatabase db) => db
+      .transactions
+      .createAlias('scanned_documents__transaction_id__transactions__id');
+
+  $$TransactionsTableProcessedTableManager? get transactionId {
+    final $_column = $_itemColumn<int>('transaction_id');
+    if ($_column == null) return null;
+    final manager = $$TransactionsTableTableManager(
+      $_db,
+      $_db.transactions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_transactionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $$ScannedDocumentsTableFilterComposer
     extends Composer<_$AppDatabase, $ScannedDocumentsTable> {
   $$ScannedDocumentsTableFilterComposer({
@@ -2656,15 +2845,33 @@ class $$ScannedDocumentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get transactionId => $composableBuilder(
-    column: $table.transactionId,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<DateTime> get scannedAt => $composableBuilder(
     column: $table.scannedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$TransactionsTableFilterComposer get transactionId {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ScannedDocumentsTableOrderingComposer
@@ -2706,15 +2913,33 @@ class $$ScannedDocumentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get transactionId => $composableBuilder(
-    column: $table.transactionId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get scannedAt => $composableBuilder(
     column: $table.scannedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$TransactionsTableOrderingComposer get transactionId {
+    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ScannedDocumentsTableAnnotationComposer
@@ -2744,13 +2969,31 @@ class $$ScannedDocumentsTableAnnotationComposer
   GeneratedColumn<String> get rawText =>
       $composableBuilder(column: $table.rawText, builder: (column) => column);
 
-  GeneratedColumn<int> get transactionId => $composableBuilder(
-    column: $table.transactionId,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<DateTime> get scannedAt =>
       $composableBuilder(column: $table.scannedAt, builder: (column) => column);
+
+  $$TransactionsTableAnnotationComposer get transactionId {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.transactionId,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ScannedDocumentsTableTableManager
@@ -2764,16 +3007,9 @@ class $$ScannedDocumentsTableTableManager
           $$ScannedDocumentsTableAnnotationComposer,
           $$ScannedDocumentsTableCreateCompanionBuilder,
           $$ScannedDocumentsTableUpdateCompanionBuilder,
-          (
-            ScannedDocument,
-            BaseReferences<
-              _$AppDatabase,
-              $ScannedDocumentsTable,
-              ScannedDocument
-            >,
-          ),
+          (ScannedDocument, $$ScannedDocumentsTableReferences),
           ScannedDocument,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool transactionId})
         > {
   $$ScannedDocumentsTableTableManager(
     _$AppDatabase db,
@@ -2829,9 +3065,56 @@ class $$ScannedDocumentsTableTableManager
                 scannedAt: scannedAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ScannedDocumentsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({transactionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (transactionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.transactionId,
+                                referencedTable:
+                                    $$ScannedDocumentsTableReferences
+                                        ._transactionIdTable(db),
+                                referencedColumn:
+                                    $$ScannedDocumentsTableReferences
+                                        ._transactionIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -2846,12 +3129,9 @@ typedef $$ScannedDocumentsTableProcessedTableManager =
       $$ScannedDocumentsTableAnnotationComposer,
       $$ScannedDocumentsTableCreateCompanionBuilder,
       $$ScannedDocumentsTableUpdateCompanionBuilder,
-      (
-        ScannedDocument,
-        BaseReferences<_$AppDatabase, $ScannedDocumentsTable, ScannedDocument>,
-      ),
+      (ScannedDocument, $$ScannedDocumentsTableReferences),
       ScannedDocument,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool transactionId})
     >;
 typedef $$AppointmentsTableCreateCompanionBuilder =
     AppointmentsCompanion Function({
@@ -2862,6 +3142,7 @@ typedef $$AppointmentsTableCreateCompanionBuilder =
       Value<String?> vehicle,
       Value<String?> notes,
       required DateTime scheduledAt,
+      Value<int> durationMinutes,
       Value<bool> isDone,
       Value<DateTime> createdAt,
     });
@@ -2874,6 +3155,7 @@ typedef $$AppointmentsTableUpdateCompanionBuilder =
       Value<String?> vehicle,
       Value<String?> notes,
       Value<DateTime> scheduledAt,
+      Value<int> durationMinutes,
       Value<bool> isDone,
       Value<DateTime> createdAt,
     });
@@ -2919,6 +3201,11 @@ class $$AppointmentsTableFilterComposer
 
   ColumnFilters<DateTime> get scheduledAt => $composableBuilder(
     column: $table.scheduledAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2977,6 +3264,11 @@ class $$AppointmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isDone => $composableBuilder(
     column: $table.isDone,
     builder: (column) => ColumnOrderings(column),
@@ -3019,6 +3311,11 @@ class $$AppointmentsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get scheduledAt => $composableBuilder(
     column: $table.scheduledAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get durationMinutes => $composableBuilder(
+    column: $table.durationMinutes,
     builder: (column) => column,
   );
 
@@ -3067,6 +3364,7 @@ class $$AppointmentsTableTableManager
                 Value<String?> vehicle = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> scheduledAt = const Value.absent(),
+                Value<int> durationMinutes = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => AppointmentsCompanion(
@@ -3077,6 +3375,7 @@ class $$AppointmentsTableTableManager
                 vehicle: vehicle,
                 notes: notes,
                 scheduledAt: scheduledAt,
+                durationMinutes: durationMinutes,
                 isDone: isDone,
                 createdAt: createdAt,
               ),
@@ -3089,6 +3388,7 @@ class $$AppointmentsTableTableManager
                 Value<String?> vehicle = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required DateTime scheduledAt,
+                Value<int> durationMinutes = const Value.absent(),
                 Value<bool> isDone = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => AppointmentsCompanion.insert(
@@ -3099,6 +3399,7 @@ class $$AppointmentsTableTableManager
                 vehicle: vehicle,
                 notes: notes,
                 scheduledAt: scheduledAt,
+                durationMinutes: durationMinutes,
                 isDone: isDone,
                 createdAt: createdAt,
               ),

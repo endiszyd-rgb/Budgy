@@ -25,4 +25,34 @@ class AppointmentsDao extends DatabaseAccessor<AppDatabase>
       (update(appointments)..where((a) => a.id.equals(id))).write(
         AppointmentsCompanion(isDone: Value(isDone)),
       );
+
+  /// Granular reschedule used by calendar drag-to-move and drag-to-resize —
+  /// mirrors [setDone]'s partial-write pattern so only these two columns
+  /// are touched.
+  Future<void> updateSchedule(
+    int id,
+    DateTime newScheduledAt,
+    int newDurationMinutes,
+  ) => (update(appointments)..where((a) => a.id.equals(id))).write(
+    AppointmentsCompanion(
+      scheduledAt: Value(newScheduledAt),
+      durationMinutes: Value(newDurationMinutes),
+    ),
+  );
+
+  /// Bounded-range watch for the calendar view, so it doesn't re-query the
+  /// full table as appointment history grows. [watchAllAppointments] is
+  /// left untouched for any other callers.
+  Stream<List<Appointment>> watchAppointmentsInRange(
+    DateTime start,
+    DateTime end,
+  ) =>
+      (select(appointments)
+            ..where(
+              (a) =>
+                  a.scheduledAt.isBiggerOrEqualValue(start) &
+                  a.scheduledAt.isSmallerThanValue(end),
+            )
+            ..orderBy([(a) => OrderingTerm.asc(a.scheduledAt)]))
+          .watch();
 }
